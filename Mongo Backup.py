@@ -10,9 +10,11 @@ import datetime
 import subprocess
 import zipfile
 import shutil
+import psutil
 from pymongo import MongoClient,MongoReplicaSetClient
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(format='%(levelname)s:%(message)s',filename='d:\Development\Python\log\mongo-backup.log',level=logging.INFO)
+
 
 #Key options for script launch 
 parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
@@ -47,7 +49,11 @@ else:
     storage_dir = "d:/Development/Mongodb/storage/monthly/"
     max_backups = 2    
 
-
+#check free disk space
+disk_space = psutil.disk_usage(storage_dir)
+if (disk_space.percent > 85):
+    print ("Not enough free disk space\n")
+    
 #pid = os.getpid()
 #def check_pid(pid):        
     #""" Check for the existence of a pid. """
@@ -72,6 +78,8 @@ db_names=db_conn.database_names()
 
 
 class MongoDB():
+    get_start_time = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')    
+    logging.info("%s Starting MongoDB Backup" % (get_start_time)) 
        
     def __init__(self,db_names):    
         for x in db_names:
@@ -95,7 +103,7 @@ class MongoDB():
                 #'-rf',
                 #'%s','os.path.dirname(work_dir)'])
         #logging.info(cleanup_folder)
-        print "Running mongodump for %s current date %s " % (db_name,self.now)
+        #print "Running mongodump for %s current date %s " % (db_name,self.now)
         backup_output = subprocess.check_output(
                     [
                         'mongodump',
@@ -106,7 +114,7 @@ class MongoDB():
                         #'--port', '%s' % port,
                         '-o', '%s' % work_dir
                     ])
-        logging.info(backup_output)
+        #logging.info(backup_output)
         
         #Ziping the result
         archive_name = self.db_name + '.'+ self.now
@@ -114,10 +122,10 @@ class MongoDB():
         archive_path = os.path.join(storage_dir,self.db_name)
         
         #Check if backup directory exists
-        if os.path.exists(archive_path):
-            print "Backup Directory Exists"
-        else:
+        if not os.path.exists(archive_path):
             os.makedirs(os.path.join(storage_dir,self.db_name))
+        
+            
             
         with zipfile.ZipFile(os.path.join(archive_path,"%s.zip" % (archive_name)), "w", zipfile.ZIP_DEFLATED) as zf:
             abs_src = os.path.abspath(source_name)
@@ -125,10 +133,10 @@ class MongoDB():
                 for filename in files:
                     absname = os.path.abspath(os.path.join(dirname, filename))
                     arcname = absname[len(abs_src) + 1:]
-                    print 'zipping %s as %s' % (os.path.join(dirname, filename),
-                                               arcname)
+                    #print 'zipping %s as %s' % (os.path.join(dirname, filename),
+                    #                           arcname)
                     zf.write(absname, arcname)
-                    print "End zip dump and saving zip files to storage"
+                    #print "End zip dump and saving zip files to storage"
                          
         
         
@@ -143,21 +151,22 @@ class MongoDB():
             a.sort()
             filetodel = a[0]
             del a[0]
-            print "File to remove: %s" % filetodel
+            #print "File to remove: %s" % filetodel
             os.remove(os.path.join(archive_path,filetodel))
-            print "File %s deleted" % filetodel
+            #print "File %s deleted" % filetodel
             
             
-            print "CLeanup for DB %s Done" %self.db_name
-        print "Count for Backup zip files in %s Backup Directory: %d" %(self.db_name, len(a))
-        
+            #print "CLeanup for DB %s Done" %self.db_name
+        #print "Count for Backup zip files in %s Backup Directory: %d" %(self.db_name, len(a))
+get_end_time = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')    
+logging.info("%s Backup Done Successfully" %(get_end_time))
   
      
               
 try:
     MongoDB(db_names)
 except AssertionError, msg:
-    logging.error(msg)        
+    logging.error(msg)
 
 
 

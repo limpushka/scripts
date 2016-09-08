@@ -10,9 +10,10 @@ import datetime
 import subprocess
 import zipfile
 import shutil
+import psutil
 from pymongo import MongoClient,MongoReplicaSetClient
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(format='%(levelname)s:%(message)s',filename='/var/log/mongo-backup.log', filemode='w',level=logging.INFO)
 
 #Key options for script launch 
 parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
@@ -23,21 +24,26 @@ parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily
 args = parser.parse_args()
 
 #Check our arguments
-
 if args.monthly:
-    work_dir = "/datadrive/opt/mongodbbackup/work"
+    work_dir = "/datadrive/opt/mongodbbackup/work/"
     storage_dir = "/datadrive/opt/mongodbbackup/storage/monthly"
     max_backups = 2    
 elif args.weekly:
-    work_dir = "/datadrive/opt/mongodbbackup/work"
+    work_dir = "/datadrive/opt/mongodbbackup/work/"
     storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly"
     max_backups = 4    
 elif args.daily:
-    work_dir = "/datadrive/opt/mongodbbackup/work"
+    work_dir = "/datadrive/opt/mongodbbackup/work/"
     storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
-    work_dir = "d:/Development/Mongodb/work/"
-    storage_dir = "d:/Development/Mongodb/storage/daily"
     max_backups = 2  
+
+#check free disk space
+disk_space = psutil.disk_usage(storage_dir)
+if (disk_space.percent > 85):
+    print ("Not enough free disk space\n")
+
+
+#Check if pid running
 pid = os.getpid()
 
 def check_pid(pid):        
@@ -56,9 +62,6 @@ db_pass = "abbyy231*"
 
 #Connect to mongodb and Get all Database names
 db_conn = MongoClient('localhost',27017)
-#db_names=db_conn.database_names()
-#db_conn = MongoReplicaSetClient('localhost', 'admin',replicaSet='testreplset01',
-#   read_preference=ReadPreference.SECONDARY_PREFERRED)
 db_conn.admin.authenticate(db_login,db_pass)
 db_names=db_conn.database_names()
 
@@ -106,18 +109,19 @@ class MongoDB():
         archive_path = os.path.join(storage_dir,self.db_name)
 
         #Check if backup directory exists
-        if os.path.exists(archive_path):
-            print "Backup Directory Exists"
-        else:
-            os.mkdir(os.path.join(storage_dir + self.db_name))
+        if not os.path.exists(archive_path):
+            os.makedirs(os.path.join(storage_dir,self.db_name))
 
         with zipfile.ZipFile(os.path.join(archive_path,"%s.zip" % (archive_name)), "w", zipfile.ZIP_DEFLATED) as zf:
             abs_src = os.path.abspath(source_name)
-            arcname = absname[len(abs_src) + 1:]
-            print 'zipping %s as %s' % (os.path.join(dirname, filename),
-                                           arcname)
-            zf.write(absname, arcname)
-            print "End zip dump and saving zip files to storage"
+            for dirname, subdirs, files in os.walk(abs_src):
+                for filename in files:
+                    absname = os.path.abspath(os.path.join(dirname, filename))
+                    arcname = absname[len(abs_src) + 1:]
+                    #print 'zipping %s as %s' % (os.path.join(dirname, filename),
+                    #                           arcname)
+                    zf.write(absname, arcname)
+                    #print "End zip dump and saving zip files to storage"
 
 
 
@@ -125,24 +129,29 @@ class MongoDB():
     def run_mongocleanup(self,db_name):
         archive_path = os.path.join(storage_dir,self.db_name)
         a = []
-	while (len(a) > max_backups):
-	    a.sort()
-	    filetodel = a[0]
-	    del a[0]
-	    print "File to remove: %s" % filetodel
-	    os.remove(os.path.join(archive_path,filetodel))
-	    print "File %s deleted" % filetodel
-	print "CLeanup for DB %s Done" %self.db_name
-	print "We dont need to cleanup"
-	print "Count for Backup zip files in Backup Directory: %d" %len(a)	
-
-
-
+        for files in os.listdir(archive_path):
+            a.append(files)
+       
+        while (len(a) > max_backups):
+            a.sort()
+            filetodel = a[0]
+            del a[0]
+            #print "File to remove: %s" % filetodel
+            os.remove(os.path.join(archive_path,filetodel))
+            #print "File %s deleted" % filetodel
+            
+            
+            #print "CLeanup for DB %s Done" %self.db_name
+        #print "Count for Backup zip files in %s Backup Directory: %d" %(self.db_name, len(a))
+get_end_time = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')    
+logging.info("%s Backup Done Successfully" %(get_end_time))
+  
+     
+              
 try:
     MongoDB(db_names)
 except AssertionError, msg:
     logging.error(msg)
-
 
 
 
