@@ -13,7 +13,7 @@ import shutil
 import psutil
 from pymongo import MongoClient,MongoReplicaSetClient
 
-logging.basicConfig(format='%(levelname)s:%(message)s',filename='/var/log/mongo-backup.log', filemode='w',level=logging.INFO)
+logging.basicConfig(format='%(levelname)s:%(message)s',filename='/var/log/mongo-backup.log', level=logging.INFO)
 
 #Key options for script launch 
 parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
