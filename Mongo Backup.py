@@ -31,19 +31,22 @@ if args.monthly:
     #storage_dir = "/datadrive/opt/mongodbbackup/storage/montlhy/"
     work_dir = "d:/Development/Mongodb/work/"
     storage_dir = "d:/Development/Mongodb/storage/monthly/"
-    max_backups = 2    
+    max_backups = 2
+    logging.info("Starting monthly backup" )
 elif args.weekly:
     #work_dir = "/datadrive/opt/mongodbbackup/work/"
     #storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly/"
     work_dir = "d:/Development/Mongodb/work/weekly/"
     storage_dir = "d:/Development/Mongodb/storage/weekly/"
     max_backups = 4    
+    logging.info("Starting weekly backup" )
 elif args.daily:
     #work_dir = "/datadrive/opt/mongodbbackup/work/"
     #storage_dir = "/datadrive/opt/mongodbbackup/storage/daily/"
     work_dir = "d:/Development/Mongodb/work/"
     storage_dir = "d:/Development/Mongodb/storage/daily/"
-    max_backups = 2    
+    max_backups = 2
+    logging.info("Starting daily backup" )
 else:
     work_dir = "d:/Development/Mongodb/work/"
     storage_dir = "d:/Development/Mongodb/storage/monthly/"
@@ -52,7 +55,7 @@ else:
 #check free disk space
 disk_space = psutil.disk_usage(storage_dir)
 if (disk_space.percent > 85):
-    print ("Not enough free disk space\n")
+    print ("Not enough free disk space. %d \n" % (disk_space.percent))
     
 #pid = os.getpid()
 #def check_pid(pid):        
@@ -133,10 +136,10 @@ class MongoDB():
                 for filename in files:
                     absname = os.path.abspath(os.path.join(dirname, filename))
                     arcname = absname[len(abs_src) + 1:]
-                    #print 'zipping %s as %s' % (os.path.join(dirname, filename),
-                    #                           arcname)
+                    print 'zipping %s as %s' % (os.path.join(dirname, filename),
+                                              arcname)
                     zf.write(absname, arcname)
-                    #print "End zip dump and saving zip files to storage"
+                    print "End zip dump and saving zip files to storage"
                          
         
         
