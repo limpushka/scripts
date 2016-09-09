@@ -2,19 +2,29 @@
 # -*- coding: utf-8 -*-
 # Backup script Made for Abbyy-LS
 
+import sys
+import time
 import os
 import argparse
 import logging
 import datetime
-#import urlparse
 import subprocess
 import zipfile
 import shutil
 import psutil
-from pymongo import MongoClient,MongoReplicaSetClient
+import zc.lockfile
+from pymongo import MongoClient
 
-logging.basicConfig(format='%(levelname)s:%(message)s',filename='d:\Development\Python\log\mongo-backup.log',level=logging.INFO)
+logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s',datefmt='%m/%d/%Y %H:%M:%S' ,filename='d:\Development\Python\log\mongo-backup.log',level=logging.INFO)
 
+
+#Check if file locked and exits
+lockfile = "d:/Development/Mongodb/Mongolock.lock"
+if os.path.exists(lockfile):
+    logging.error("Another instance of this script is Running")
+    sys.exit("Another instance of this script is Running")
+else:
+    lock = zc.lockfile.LockFile(lockfile,content_template='{pid}; {hostname}')
 
 #Key options for script launch 
 parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
@@ -24,50 +34,38 @@ parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily
  
 args = parser.parse_args()
 
-#Check our arguments
+#Check our key arguments
 
 if args.monthly:
     #work_dir = "/datadrive/opt/mongodbbackup/work/"
-    #storage_dir = "/datadrive/opt/mongodbbackup/storage/montlhy/"
+    #storage_dir = "/datadrive/opt/mongodbbackup/storage/montlhy"
     work_dir = "d:/Development/Mongodb/work/"
     storage_dir = "d:/Development/Mongodb/storage/monthly/"
     max_backups = 2
-    logging.info("Starting monthly backup" )
+    logging.info("Starting monthly MongoDB backup" )
 elif args.weekly:
     #work_dir = "/datadrive/opt/mongodbbackup/work/"
-    #storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly/"
+    #storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly"
     work_dir = "d:/Development/Mongodb/work/weekly/"
     storage_dir = "d:/Development/Mongodb/storage/weekly/"
     max_backups = 4    
-    logging.info("Starting weekly backup" )
+    logging.info("Starting weekly MongoDB backup" )
 elif args.daily:
     #work_dir = "/datadrive/opt/mongodbbackup/work/"
-    #storage_dir = "/datadrive/opt/mongodbbackup/storage/daily/"
+    #storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
     work_dir = "d:/Development/Mongodb/work/"
     storage_dir = "d:/Development/Mongodb/storage/daily/"
-    max_backups = 2
-    logging.info("Starting daily backup" )
+    min_backups = 10
+    logging.info("Starting daily MongoDB backup" )
 else:
     work_dir = "d:/Development/Mongodb/work/"
     storage_dir = "d:/Development/Mongodb/storage/monthly/"
-    max_backups = 2    
+    max_backups = 2
+    logging.info("Starting monthly MongoDB backup")
 
-#check free disk space
-disk_space = psutil.disk_usage(storage_dir)
-if (disk_space.percent > 85):
-    print ("Not enough free disk space. %d \n" % (disk_space.percent))
-    
-#pid = os.getpid()
-#def check_pid(pid):        
-    #""" Check for the existence of a pid. """
-    #try:
-        #os.kill(pid, 0)
-    #except OSError:
-        #return False
-    #else:
-        #return True
-#check_pid(pid)
 
+
+#Switch replica to single
 
 #Connect to mongodb and Get all Database names
 db_conn = MongoClient('localhost',27017)
@@ -81,32 +79,26 @@ db_names=db_conn.database_names()
 
 
 class MongoDB():
-    get_start_time = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')    
-    logging.info("%s Starting MongoDB Backup" % (get_start_time)) 
-       
+           
     def __init__(self,db_names):    
+        b = []
         for x in db_names:
             if x != "local" and x !='admin':
                 self.db_name = x
-                print "Mongo BD Object for Backup Database Name %s " % self.db_name
-                self.run_mongobackup(self.db_name)
-                self.run_mongocleanup(self.db_name)
+                #print "Mongo BD Object for Backup Database Name %s " % self.db_name
+                #check free disk space
+                disk_space = psutil.disk_usage(storage_dir)
+                if (disk_space.percent < 85):
+                    self.run_mongobackup(self.db_name)               
+                else:
+                    self.run_mongocleanup(self.db_name)
         
         
                 
     def run_mongobackup(self,db_name):
         self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
-        #CLeanup work_dir folder.
-        #os.remove(work_dir)
         
-        #print os.path.dirname(work_dir)
-        #cleanup_folder = subprocess.check_output(
-            #[
-                #'rm',
-                #'-rf',
-                #'%s','os.path.dirname(work_dir)'])
-        #logging.info(cleanup_folder)
-        #print "Running mongodump for %s current date %s " % (db_name,self.now)
+        logging.info("Running mongodump for DB: %s " % (db_name))
         backup_output = subprocess.check_output(
                     [
                         'mongodump',
@@ -130,17 +122,14 @@ class MongoDB():
         
             
             
-        with zipfile.ZipFile(os.path.join(archive_path,"%s.zip" % (archive_name)), "w", zipfile.ZIP_DEFLATED) as zf:
+        with zipfile.ZipFile(os.path.join(archive_path,"%s.zip" % (archive_name)), "w", allowZip64 = True) as zf:
             abs_src = os.path.abspath(source_name)
             for dirname, subdirs, files in os.walk(abs_src):
                 for filename in files:
                     absname = os.path.abspath(os.path.join(dirname, filename))
                     arcname = absname[len(abs_src) + 1:]
-                    print 'zipping %s as %s' % (os.path.join(dirname, filename),
-                                              arcname)
                     zf.write(absname, arcname)
-                    print "End zip dump and saving zip files to storage"
-                         
+            logging.info("End zip dump for DB: %s and saving zip file to %s " %(self.db_name,archive_path))   
         
         
         
@@ -157,21 +146,22 @@ class MongoDB():
             #print "File to remove: %s" % filetodel
             os.remove(os.path.join(archive_path,filetodel))
             #print "File %s deleted" % filetodel
-            
+            logging.info("Not enough free disk space. Cleanup process started.Files to Del %s" %filetodel)
             
             #print "CLeanup for DB %s Done" %self.db_name
-        #print "Count for Backup zip files in %s Backup Directory: %d" %(self.db_name, len(a))
-get_end_time = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')    
-logging.info("%s Backup Done Successfully" %(get_end_time))
-  
-     
-              
+        #logging.info("Cleanup for Backup zip files in %s Backup Directory: %d" %(self.db_name, len(a))
+                
+   
+    logging.info("Backup Done Successfully")
+
+
 try:
     MongoDB(db_names)
 except AssertionError, msg:
     logging.error(msg)
 
-
-
+# Unclock and delete temp file
+lock.close()
+os.remove(lockfile)
     
     
