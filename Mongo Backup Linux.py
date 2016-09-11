@@ -18,7 +18,7 @@ from pymongo import MongoClient
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s',datefmt='%m/%d/%Y %H:%M:%S' ,filename='d:\Development\Python\log\mongo-backup.log',level=logging.INFO)
 
 #Check if file locked and exits
-lockfile = "d:/Development/Mongodb/Mongolock.lock"
+lockfile = "/tmp/Mongolock.lock"
 if os.path.exists(lockfile):
     logging.error("Another instance of this script is Running")
     sys.exit("Another instance of this script is Running")
