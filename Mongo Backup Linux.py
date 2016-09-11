@@ -135,7 +135,7 @@ class MongoDB():
                 
 
 def disk_clean_up(db_names): # Delete old zip backup files when disk space is less than 85%
-    cleanup_dir = "d:/Development/Mongodb/storage/daily/"
+    cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
     for x in db_names:
         if x != 'local':
             cleanup_path = os.path.join(cleanup_dir,x)
@@ -151,7 +151,7 @@ def disk_clean_up(db_names): # Delete old zip backup files when disk space is le
                 logging.info("Not enough free disk space. Cleanup process started.File to Del %s" %filetodel)  
 
 
-diskSpace = psutil.disk_usage(storage_dir)
+disk_space = psutil.disk_usage(storage_dir)
 while (disk_space.percent >= 85):
     disk_clean_up(db_names)
 
