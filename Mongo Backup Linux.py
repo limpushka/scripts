@@ -15,16 +15,21 @@ import psutil
 import zc.lockfile
 from pymongo import MongoClient
 
-
-logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s',datefmt='%m/%d/%Y %H:%M:%S' ,filename='/var/log/mongo-backup.log',level=logging.INFO)
+logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s',datefmt='%m/%d/%Y %H:%M:%S' ,filename='d:\Development\Python\log\mongo-backup.log',level=logging.INFO)
 
 #Check if file locked and exits
-lockfile = "/tmp/Mongolock.lock"
+lockfile = "d:/Development/Mongodb/Mongolock.lock"
 if os.path.exists(lockfile):
     logging.error("Another instance of this script is Running")
     sys.exit("Another instance of this script is Running")
 else:
     lock = zc.lockfile.LockFile(lockfile,content_template='{pid}; {hostname}')
+
+#Unlock and delete lock file.
+def un_lock():
+    lock.close()
+    os.remove(lockfile)
+    
     
 #Key options for script launch 
 parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
@@ -48,7 +53,7 @@ elif args.weekly:
 elif args.daily:
     work_dir = "/datadrive/opt/mongodbbackup/work/"
     storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
-    max_backups = 2
+    max_backups = 100
     logging.info("Starting daily MongoDB backup" )
 
 
@@ -61,86 +66,94 @@ db_pass = "abbyy231*"
 db_conn = MongoClient('localhost',27017)
 db_conn.admin.authenticate(db_login,db_pass)
 db_names=db_conn.database_names()
-
+#if db_conn == True:
+    #db_names=db_conn.database_names()
+#else:
+    #logging.error("Could not connect to MongoDB Instance.Check if service is running")
+    #sys.exit("Could not connect to MongoDB Instance.Check Mongodb service")
 
 
 
 class MongoDB():
 
-    def __init__(self,db_names):    
-        b = []
+    def __init__(self,db_names):              
         for x in db_names:
-            if x != "local" and x !='admin':
-                self.db_name = x
-                #print "Mongo BD Object for Backup Database Name %s " % self.db_name
-                #check free disk space
-                disk_space = psutil.disk_usage(storage_dir)
-                if (disk_space.percent < 85):
-                    self.run_mongobackup(self.db_name)               
-                else:
-                    self.run_mongocleanup(self.db_name)
+            if x != "local":
+                self.db_name = x              
+                self.mongo_backup(self.db_name)
+                self.mongo_clean_up(self.db_name)
 
-    def run_mongobackup(self,db_name):
-        self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+    def mongo_backup(self,db_name):
+        self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
         
         logging.info("Running mongodump for DB: %s " % (db_name))
-        backup_output = subprocess.check_output(
+        backup_output = subprocess.check_output(  # Run Mongodump for each Database
                     [
                         'mongodump',
-                        '-u', '%s' % db_login,
-                        '-p', '%s' % db_pass,
-                        '--authenticationDatabase','%s' %'admin',
+                        #'-u', '%s' % db_login,
+                        #'-p', '%s' % db_pass,
+                        #'--authenticationDatabase','%s' %admin,
                         '-d', '%s' % self.db_name,
                         #'--port', '%s' % port,
                         '-o', '%s' % work_dir
-	            ])
-       
-
+                    ])
         
-        
-
-        #Check if backup directory exists
         archive_name = self.db_name + '.'+ self.now
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir,self.db_name)  
         
-        if not os.path.exists(archive_path):
+        
+        if not os.path.exists(archive_path): # Check if backup directory exists
             os.makedirs(os.path.join(storage_dir,self.db_name))
         
-        #Ziping the result
-        with zipfile.ZipFile(os.path.join(archive_path,"%s.zip" % (archive_name)), "w", allowZip64 = True) as zf:
+        with zipfile.ZipFile(os.path.join(archive_path,"%s.zip" % (archive_name)), "w", allowZip64 = True) as zf:  # Ziping the result
             abs_src = os.path.abspath(source_name)
             for dirname, subdirs, files in os.walk(abs_src):
                 for filename in files:
                     absname = os.path.abspath(os.path.join(dirname, filename))
                     arcname = absname[len(abs_src) + 1:]
                     zf.write(absname, arcname)
-            logging.info("End zip dump for DB: %s and saving zip file to %s " %(self.db_name,archive_path))  
+            logging.info("End zip dump for DB: %s and saving zip file to %s " %(self.db_name,archive_path))
+        logging.info("Backup Done Successfully")
 
 
 
 
-    def run_mongocleanup(self,db_name):
-        archive_path = os.path.join(storage_dir,self.db_name)
-        a = []
-        for files in os.listdir(archive_path):
-            a.append(files)
-       
-        while (len(a) > max_backups):
-            a.sort()
-            filetodel = a[0]
-            del a[0]
-            #print "File to remove: %s" % filetodel
-            os.remove(os.path.join(archive_path,filetodel))
-            #print "File %s deleted" % filetodel
-            logging.info("Not enough free disk space. Cleanup process started.Files to Del %s" %filetodel)
-            
-            #print "CLeanup for DB %s Done" %self.db_name
-        #logging.info("Cleanup for Backup zip files in %s Backup Directory: %d" %(self.db_name, len(a))
+    def mongo_clean_up(self,db_name):
+            archive_path = os.path.join(storage_dir,self.db_name)
+            a = []
+            for files in os.listdir(archive_path):
+                a.append(files)
+               
+            while (len(a) > max_backups):
+                a.sort()
+                filetodel = a[0]
+                del a[0]
+                os.remove(os.path.join(archive_path,filetodel))
+                logging.info("There are too many backup files. Starting cleanup process. File %s was deleted %s from directory %s" %(filetodel,archive_path))
+            logging.info("Cleanup Done for Backup zip files in %s Backup Directory: %d" %(self.db_name, len(a)))  
                 
-   
-logging.info("Backup Done Successfully")
 
+def disk_clean_up(db_names): # Delete old zip backup files when disk space is less than 85%
+    cleanup_dir = "d:/Development/Mongodb/storage/daily/"
+    for x in db_names:
+        if x != 'local':
+            cleanup_path = os.path.join(cleanup_dir,x)
+            if not os.path.exists(cleanup_path):
+                continue
+            a = []
+            for files in os.listdir(cleanup_path):
+                a.append(files)
+                a.sort()
+                filetodel = a[0]
+                del a[0]
+                os.remove(os.path.join(cleanup_path,filetodel))
+                logging.info("Not enough free disk space. Cleanup process started.File to Del %s" %filetodel)  
+
+
+diskSpace = psutil.disk_usage(storage_dir)
+while (disk_space.percent >= 85):
+    disk_clean_up(db_names)
 
 try:
     MongoDB(db_names)
@@ -148,5 +161,4 @@ except AssertionError, msg:
     logging.error(msg)
 
 # Unclock and delete temp file
-lock.close()
-os.remove(lockfile)
+un_lock()
