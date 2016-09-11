@@ -92,7 +92,7 @@ class MongoDB():
                         'mongodump',
                         #'-u', '%s' % db_login,
                         #'-p', '%s' % db_pass,
-                        #'--authenticationDatabase','%s' %admin,
+                        #'--authenticationDatabase','%s' %'admin',
                         '-d', '%s' % self.db_name,
                         #'--port', '%s' % port,
                         '-o', '%s' % work_dir
@@ -130,7 +130,7 @@ class MongoDB():
                 filetodel = a[0]
                 del a[0]
                 os.remove(os.path.join(archive_path,filetodel))
-                logging.info("There are too many backup files. Starting cleanup process. File %s was deleted %s from directory %s" %(filetodel,archive_path))
+                logging.info("There are too many backup files. Starting cleanup process. File %s was deleted from directory %s" %(filetodel,archive_path))
             logging.info("Cleanup Done for Backup zip files in %s Backup Directory: %d" %(self.db_name, len(a)))  
                 
 
