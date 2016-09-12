@@ -155,7 +155,7 @@ class MongoDB(object):
             logging.info("Cleanup Done for Backup zip files in %s Backup Directory: %d" % (self.db_name, len(a)))
         
         
-def disk_clean_up(db_names):  # Delete old zip backup files when disk space is less than 85%
+def disk_clean_up(db_names):  # Delete old zip backup files when disk space is less than 15%
     cleanup_dir = "d:/Development/Mongodb/storage/daily/"
     for x in db_names:
         if x != 'local':
