@@ -65,7 +65,7 @@ elif args.daily:
 
 # Switch Mongo replica to single and reverse
 def switch_to_single():
-    logging_info("Start switching MongoDB to single server. Stopping service")
+    logging.info("Start switching MongoDB to single server. Stopping service")
     try:
         stop_check = subprocess.check_call(
         [
@@ -80,9 +80,9 @@ def switch_to_single():
     
     
     os.remove(mongodb_conf)
-    logging_info("Copying Mongodb config")
+    logging.info("Copying Mongodb config")
     copyfile('/etc/mongod.conf.single', mongodb_conf)
-    logging_info("Starting MongoDB service")
+    logging.info("Starting MongoDB service")
     try:
         start_check = subprocess.check_call(
         [
@@ -94,7 +94,7 @@ def switch_to_single():
             if e.returncode !=0:
                 logging.error("Failed To Stop mongodb service. Check log. ReturnCode is %s" % e.returncode)
                 sys.exit("Failed To Stop mongodb service. Check log. ReturnCode is %s" % e.returncode)
-    logging_info("Switching MongoDB to single server ended successfully.")    
+    logging.info("Switching MongoDB to single server ended successfully.")    
     
     
 
