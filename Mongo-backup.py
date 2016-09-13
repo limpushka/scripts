@@ -159,7 +159,7 @@ class MongoDB:
                 del a[0]
                 os.remove(os.path.join(archive_path,filetodel))
                 logging.info("Starting cleanup process. File %s was deleted from directory %s" % (filetodel, archive_path))
-            logging.info("Cleanup Done. Total files %d in Backup Directory %s" % (len(a), self.db_name))
+            logging.info("Cleanup Done. Total files:%d in Backup Directory %s" % (len(a), self.db_name))
                 
 
 def disk_clean_up(db_names):  # Delete old archive backup files when free disk space is less than 15%
