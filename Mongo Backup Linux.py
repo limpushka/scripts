@@ -24,48 +24,21 @@ db_pass = "abbyy231*"
 
 work_dir = "/datadrive/opt/mongodbbackup/work/"
 mongodb_conf = "/etc/mongod.conf"
-logging.info("CLean working directory")
-rmtree(work_dir) # Remove all files in work_dir
-        
-# Check if file locked and exits
-lockfile = "/tmp/Mongolock.lock"
-if os.path.exists(lockfile):
-    logging.error("Another instance of this script is Running")
-    sys.exit("Another instance of this script is Running")
-else:
-    lock = zc.lockfile.LockFile(lockfile, content_template='{pid}; {hostname}')
+lockfile = "/tmp/Mongo.lock"
+
+# Connect to Mongodb. Get list of all database names
+db_conn = MongoClient('localhost', 27017)
+db_conn.admin.authenticate(db_login, db_pass)
+db_names = db_conn.database_names()
 
 # Unlock and delete lock file.
 def un_lock():
     lock.close()
     os.remove(lockfile)
-    
-    
-# Key options for script launch
-parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
-parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
-parser.add_argument('--weekly', '-w', action="store_true", help='Option for Weekly Backup')
-parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily Backup')
- 
-args = parser.parse_args()
 
-# Check our arguments
-if args.monthly:
-    storage_dir = "/datadrive/opt/mongodbbackup/storage/monthly"
-    max_backups = 2
-    logging.info("Starting monthly MongoDB backup")
-elif args.weekly:
-    storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly"
-    max_backups = 4    
-    logging.info("Starting weekly MongoDB backup")
-elif args.daily:
-    storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
-    max_backups = 1000
-    logging.info("Starting daily MongoDB backup")
-
-# Switch Mongo replica to single and reverse
+# Switch Mongod replica to single and reverse
 def switch_to_single():
-    logging.info("Start switching MongoDB to single server. Stopping service")
+    logging.info("Start switching Mongod to single instance. Stopping service")
     try:
         stop_check = subprocess.check_call(
         [
@@ -75,14 +48,14 @@ def switch_to_single():
         ])
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
-                logging.error("Failed To Stop Mongodb service. Check log. ReturnCode is %s" % e.returncode)
-                sys.exit("Failed To Stop Mongodb service.Check log. ReturnCode is %s" % e.returncode)
+                logging.error("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                sys.exit("Failed To Stop Mongod service.Check log. ReturnCode is %s" % e.returncode)
     
     
     os.remove(mongodb_conf)
-    logging.info("Copying Mongodb config")
+    logging.info("Copying Mongod config")
     copyfile('/etc/mongod.conf.single', mongodb_conf)
-    logging.info("Starting MongoDB service")
+    logging.info("Starting Mongod service")
     try:
         start_check = subprocess.check_call(
         [
@@ -92,20 +65,41 @@ def switch_to_single():
         ])
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
-                logging.error("Failed To Stop mongodb service. Check log. ReturnCode is %s" % e.returncode)
-                sys.exit("Failed To Stop mongodb service. Check log. ReturnCode is %s" % e.returncode)
-    logging.info("Switching MongoDB to single server ended successfully.")    
+                logging.error("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                sys.exit("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
+    logging.info("Switching Mongod to single instance ended successfully.")    
     
+# Switch Mongodb single to replica set
+def switch_to_replica():
+    logging.info("Start switching Mongod to replica set. Stopping service")
+    try:
+        stop_check = subprocess.check_call(
+        [
+            'service',
+            'mongod',
+            'stop'
+        ])
+    except subprocess.CalledProcessError as e:
+            if e.returncode !=0:
+                logging.error("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                sys.exit("Failed To Stop Mongod service.Check log %s and ReturnCode" % (e.output))
     
-
-# Switch Mongodb to single server
-switch_to_single()
-    
-# Connect to mongodb and Get all Database names
-db_conn = MongoClient('localhost', 27017)
-db_conn.admin.authenticate(db_login, db_pass)
-db_names = db_conn.database_names()
-
+    os.remove(mongodb_conf)
+    logging.info("Copying Mongod config")
+    copyfile('/etc/mongod.conf.replica', mongodb_conf)
+    logging.info("Starting Mongod service")
+    try:
+        start_check = subprocess.check_call(
+        [
+            'service',
+            'mongod',
+            'start'
+        ])
+    except subprocess.CalledProcessError as e:
+            if e.returncode !=0:
+                logging.error("Failed to Start Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                sys.exit("Failed to Stop Mongod service. Check log %s and ReturnCode" % (e.output))
+    logging.info("Switching Mongod to replica ended successfully.")
 
 class MongoDB:
 
@@ -131,8 +125,8 @@ class MongoDB:
                         '-o', '%s' % work_dir
                     ])
         except subprocess.CalledProcessError as e:
-                    logging.error("Failed to run Mongodump.Output Error %s" % e.output)
-                    sys.exit("Failed to run Mongodump.Output Error %s" % e.output)        
+                    logging.error("Failed to run mongodump. Output Error %s" % e.output)
+                    sys.exit("Failed to run mongodump. Output Error %s" % e.output)        
         
         archive_name = self.db_name + '.' + self.now
         source_name = work_dir + self.db_name
@@ -168,7 +162,7 @@ class MongoDB:
             logging.info("Cleanup Done. Total files %d in Backup Directory %s" % (len(a), self.db_name))
                 
 
-def disk_clean_up(db_names):  # Delete old zip backup files when disk space is less than 15%
+def disk_clean_up(db_names):  # Delete old archive backup files when free disk space is less than 15%
     cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
     for x in db_names:
         if x != 'local':
@@ -189,6 +183,45 @@ def disk_clean_up(db_names):  # Delete old zip backup files when disk space is l
                     sys.exit("Disk cleanup failed. Nothing to delete.")
 
 
+"""Script run start's here"""
+
+# Start cleaning working directory
+logging.info("CLeaning working directory")
+rmtree(work_dir) # Remove all files in work_dir
+
+# Check, if file is locked and exits, if true
+if os.path.exists(lockfile):
+    logging.error("Another instance of this script is Running")
+    sys.exit("Another instance of this script is Running")
+else:
+    lock = zc.lockfile.LockFile(lockfile, content_template='{pid}; {hostname}')
+                                        
+# Key options for script launch
+parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
+parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
+parser.add_argument('--weekly', '-w', action="store_true", help='Option for Weekly Backup')
+parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily Backup')
+                                     
+args = parser.parse_args()
+                                    
+# Checking input arguments
+if args.monthly:
+    storage_dir = "/datadrive/opt/mongodbbackup/storage/monthly"
+    max_backups = 2
+    logging.info("Starting monthly MongoDB backup")
+elif args.weekly:
+    storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly"
+    max_backups = 4    
+    logging.info("Starting weekly MongoDB backup")
+elif args.daily:
+    storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
+    max_backups = 1000
+    logging.info("Starting daily MongoDB backup")
+
+# Switch Mongod to single 
+switch_to_single()
+
+# Checks free disk space and cleans storage directory  if disk usage is higher than 85%
 disk_space = psutil.disk_usage(storage_dir)
 while disk_space.percent >= 85:
     disk_clean_up(db_names)
@@ -198,39 +231,8 @@ try:
 except AssertionError, msg:
     logging.error(msg)
 
-# Unlock and delete temp file
+# Unlocking and deleting temp file
 un_lock()
 
-# Switch Mongodb single to replica set
-def switch_to_replica():
-    logging.info("Start switching MongoDB to replica set. Stopping service")
-    try:
-        stop_check = subprocess.check_call(
-        [
-            'service',
-            'mongod',
-            'stop'
-        ])
-    except subprocess.CalledProcessError as e:
-            if e.returncode !=0:
-                logging.error("Failed To Stop mongodb service. Check log. ReturnCode is %s" % e.returncode)
-                sys.exit("Failed To Stop mongodb service.Check log %s and ReturnCode" % (e.output))
-    
-    #logging_info(stop_check)
-    os.remove(mongodb_conf)
-    logging.info("Copying Mongodb config")
-    copyfile('/etc/mongod.conf.replica', mongodb_conf)
-    logging.info("Starting MongoDB service")
-    try:
-        start_check = subprocess.check_call(
-        [
-            'service',
-            'mongod',
-            'start'
-        ])
-    except subprocess.CalledProcessError as e:
-            if e.returncode !=0:
-                logging.error("Failed To Start mongodb service. Check log. ReturnCode is %s" % e.returncode)
-                sys.exit("Failed To Stop mongodb service. Check log %s and ReturnCode" % (e.output))
-    logging.info("Switching MongoDB to replica ended successfully.")
+
 switch_to_replica()
