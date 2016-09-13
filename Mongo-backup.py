@@ -234,5 +234,5 @@ except AssertionError, msg:
 # Unlocking and deleting temp file
 un_lock()
 
-
+# Switch Mongod to replica
 switch_to_replica()
