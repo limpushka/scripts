@@ -19,8 +19,8 @@ from pymongo import MongoClient
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename='/var/log/mongo-backup.log', level=logging.INFO)
 
 # db auth credentials
-db_login = "admin"
-db_pass = "abbyy231*"
+# db_login = "admin"
+# db_pass = "abbyy231*"
 
 work_dir = "/datadrive/opt/mongodbbackup/work/"
 mongodb_conf = "/etc/mongod.conf"
@@ -28,7 +28,7 @@ lockfile = "/tmp/Mongo.lock"
 
 # Connect to Mongodb. Get list of all database names
 db_conn = MongoClient('localhost', 27017)
-db_conn.admin.authenticate(db_login, db_pass)
+# db_conn.admin.authenticate(db_login, db_pass)
 db_names = db_conn.database_names()
 
 # Unlock and delete lock file.
@@ -117,9 +117,9 @@ class MongoDB:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
                     [
                         'mongodump',
-                        '-u', '%s' % db_login,
-                        '-p', '%s' % db_pass,
-                        '--authenticationDatabase','%s' %'admin',
+                        # '-u', '%s' % db_login,
+                        # '-p', '%s' % db_pass,
+                        # '--authenticationDatabase','%s' %'admin',
                         '-d', '%s' % self.db_name,
                         # '--port', '%s' % port,
                         '-o', '%s' % work_dir
