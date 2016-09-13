@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Backup script Made for Abbyy-LS
 # Script connects to MongoDB, gets all db names, then for each database except "local" performs mongodump and archive's the result  to our backup storage directory.
-# Script checks our storage directory and if free disk space is less than 15% - performs Clean up.
+# Script checks our storage directory and if free disk space is less than 15% - performs Disk Clean up.
 
 import sys
 import os
