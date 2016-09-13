@@ -137,7 +137,7 @@ class MongoDB:
 
         zip_name = os.path.join(archive_path, "%s.zip" % archive_name)
 
-        with zipfile.ZipFile(zip_name, "w", allowZip64=True) as zf:  # Zipping the result
+        with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as zf:  # Zipping the result
             abs_src = os.path.abspath(source_name)
             for dirname, subdirs, files in os.walk(abs_src):
                 for filename in files:
