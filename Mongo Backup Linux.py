@@ -24,7 +24,9 @@ db_pass = "abbyy231*"
 
 work_dir = "/datadrive/opt/mongodbbackup/work/"
 mongodb_conf = "/etc/mongod.conf"
-
+logging.info("CLean working directory")
+rmtree(work_dir) # Remove all files in work_dir
+        
 # Check if file locked and exits
 lockfile = "/tmp/Mongolock.lock"
 if os.path.exists(lockfile):
@@ -116,8 +118,6 @@ class MongoDB:
 
     def mongo_backup(self, db_name):
         self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
-        logging.info("CLean working directory")
-        rmtree(work_dir) # Remove all files in work_dir
         logging.info("Running mongodump for DB: %s " % db_name)
         try:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
@@ -186,6 +186,7 @@ def disk_clean_up(db_names):  # Delete old zip backup files when disk space is l
                     logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
                 elif len(a) <= 6:
                     logging.error("Disk cleanup failed. Nothing to delete.")
+                    sys.exit("Disk cleanup failed. Nothing to delete.")
 
 
 disk_space = psutil.disk_usage(storage_dir)
