@@ -66,25 +66,35 @@ else:
     work_dir = "d:/Development/Mongodb/work/"
     storage_dir = "d:/Development/Mongodb/storage/daily/"
     max_backups = 100
-    logging.info("Starting monthly MongoDB backup")
+    logging.info("Starting daily MongoDB backup")
 
 # Switch Mongo replica to single and reverse
 def switch_mongo(src, dst):
-    stop_check = subprocess.call(
+    try:
+        stop_check = subprocess.check_call(
             [
                 'service',
                 'mongod',
                 'stop'
-            ])  
+            ])
+    except subprocess.CalledProcessError as e:
+        if e.returncode !=0:
+            logging.error("Failed To Stop mongodb service.Check log Output %s and ReturnCode %s" % (e.output, e.returncode))
+            sys.exit("Failed To Stop mongodb service.Check log %s and ReturnCode" % (e.output))
     #logging_info(stop_check)
     os.remove(dst)
     shutil.copyfile(src, dst)
-    start_check = subprocess.call(
+    try:
+        start_check = subprocess.check_call(
         [
             'service',
             'mongod',
             'start'
         ])
+    except subprocess.CalledProcessError as e:
+            if e.returncode !=0:
+                logging.error("Failed To Stop mongodb service.Check log Output %s and ReturnCode %s" % (e.output, e.returncode))
+                sys.exit("Failed To Stop mongodb service.Check log %s and ReturnCode" % (e.output))    
     #logging_info(restart_check)
 
 #switch_mongo('/etc/mongod.conf.single','/etc/mongod.conf')
@@ -119,7 +129,7 @@ class MongoDB(object):
                         '-o', '%s' % work_dir
                     ])
         
-        logging_info(backup_output)
+        logging.info(backup_output)
         archive_name = self.db_name + '.' + self.now
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
@@ -152,7 +162,7 @@ class MongoDB(object):
                 del a[0]
                 os.remove(os.path.join(archive_path,filetodel))
                 logging.info("Start cleanup process. File %s was deleted from directory %s" % (filetodel, archive_path))
-            logging.info("Cleanup Done for Backup zip files in %s Backup Directory: %d" % (self.db_name, len(a)))
+                logging.info("Cleanup Done for Backup zip files in %s Backup Directory: %d" % (self.db_name, len(a)))
         
         
 def disk_clean_up(db_names):  # Delete old zip backup files when disk space is less than 15%
@@ -166,14 +176,19 @@ def disk_clean_up(db_names):  # Delete old zip backup files when disk space is l
             for files in os.listdir(cleanup_path):
                 a.append(files)
                 a.sort()
+                if len(a) == 0:
+                    break
                 filetodel = a[0]
                 del a[0]
                 os.remove(os.path.join(cleanup_path, filetodel))
                 logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
 
 disk_space = psutil.disk_usage(storage_dir)
-while disk_space.percent >= 85:
+while disk_space.percent <= 85:
     disk_clean_up(db_names)
+    
+        
+        
 
 try:
     MongoDB(db_names)

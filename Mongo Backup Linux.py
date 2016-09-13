@@ -13,10 +13,17 @@ import subprocess
 import zipfile
 import psutil
 import zc.lockfile
-from shutil import copyfile
+from shutil import copyfile, rmtree
 from pymongo import MongoClient
 
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename='/var/log/mongo-backup.log', level=logging.INFO)
+
+# db auth credentials
+db_login = "admin"
+db_pass = "abbyy231*"
+
+work_dir = "/datadrive/opt/mongodbbackup/work/"
+mongodb_conf = "/etc/mongod.conf"
 
 # Check if file locked and exits
 lockfile = "/tmp/Mongolock.lock"
@@ -42,48 +49,56 @@ args = parser.parse_args()
 
 # Check our arguments
 if args.monthly:
-    work_dir = "/datadrive/opt/mongodbbackup/work/"
     storage_dir = "/datadrive/opt/mongodbbackup/storage/monthly"
     max_backups = 2
     logging.info("Starting monthly MongoDB backup")
 elif args.weekly:
-    work_dir = "/datadrive/opt/mongodbbackup/work/"
     storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly"
     max_backups = 4    
     logging.info("Starting weekly MongoDB backup")
 elif args.daily:
-    work_dir = "/datadrive/opt/mongodbbackup/work/"
     storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
-    max_backups = 100
+    max_backups = 1000
     logging.info("Starting daily MongoDB backup")
 
 # Switch Mongo replica to single and reverse
-def switch_mongo(src, dst):
-    stop_check = subprocess.call(
-            [
-                'service',
-                'mongod',
-                'stop'
-            ])  
-    #logging_info(stop_check)
-    os.remove(dst)
-    copyfile(src, dst)
-    start_check = subprocess.call(
+def switch_to_single():
+    logging_info("Start switching MongoDB to single server. Stopping service")
+    try:
+        stop_check = subprocess.check_call(
+        [
+            'service',
+            'mongod',
+            'stop'
+        ])
+    except subprocess.CalledProcessError as e:
+            if e.returncode !=0:
+                logging.error("Failed To Stop Mongodb service. Check log. ReturnCode is %s" % e.returncode)
+                sys.exit("Failed To Stop Mongodb service.Check log. ReturnCode is %s" % e.returncode)
+    
+    
+    os.remove(mongodb_conf)
+    logging_info("Copying Mongodb config")
+    copyfile('/etc/mongod.conf.single', mongodb_conf)
+    logging_info("Starting MongoDB service")
+    try:
+        start_check = subprocess.check_call(
         [
             'service',
             'mongod',
             'start'
         ])
-    #logging_info(start_check)
-
-# Switch Mongodb to single server
-switch_mongo('/etc/mongod.conf.single','/etc/mongod.conf')
+    except subprocess.CalledProcessError as e:
+            if e.returncode !=0:
+                logging.error("Failed To Stop mongodb service. Check log. ReturnCode is %s" % e.returncode)
+                sys.exit("Failed To Stop mongodb service. Check log. ReturnCode is %s" % e.returncode)
+    logging_info("Switching MongoDB to single server ended successfully.")    
+    
     
 
-# db auth credentials
-db_login = "admin"
-db_pass = "abbyy231*"
-
+# Switch Mongodb to single server
+switch_to_single()
+    
 # Connect to mongodb and Get all Database names
 db_conn = MongoClient('localhost', 27017)
 db_conn.admin.authenticate(db_login, db_pass)
@@ -101,20 +116,24 @@ class MongoDB:
 
     def mongo_backup(self, db_name):
         self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
-
+        logging.info("CLean working directory")
+        rmtree(work_dir) # Remove all files in work_dir
         logging.info("Running mongodump for DB: %s " % db_name)
-        backup_output = subprocess.check_output(  # Run Mongodump for each Database
+        try:
+            backup_output = subprocess.check_call(  # Run Mongodump for each Database
                     [
                         'mongodump',
-                        # '-u', '%s' % db_login,
-                        # '-p', '%s' % db_pass,
-                        # '--authenticationDatabase','%s' %'admin',
+                        '-u', '%s' % db_login,
+                        '-p', '%s' % db_pass,
+                        '--authenticationDatabase','%s' %'admin',
                         '-d', '%s' % self.db_name,
                         # '--port', '%s' % port,
                         '-o', '%s' % work_dir
                     ])
+        except subprocess.CalledProcessError as e:
+                    logging.error("Failed to run Mongodump.Output Error %s" % e.output)
+                    sys.exit("Failed to run Mongodump.Output Error %s" % e.output)        
         
-        logging_info(backup_output)
         archive_name = self.db_name + '.' + self.now
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
@@ -145,8 +164,8 @@ class MongoDB:
                 filetodel = a[0]
                 del a[0]
                 os.remove(os.path.join(archive_path,filetodel))
-                logging.info("Start cleanup process. File %s was deleted from directory %s" % (filetodel, archive_path))
-            logging.info("Cleanup Done for Backup zip files in %s Backup Directory: %d" % (self.db_name, len(a)))
+                logging.info("Starting cleanup process. File %s was deleted from directory %s" % (filetodel, archive_path))
+            logging.info("Cleanup Done. Total files %d in Backup Directory %s" % (len(a), self.db_name))
                 
 
 def disk_clean_up(db_names):  # Delete old zip backup files when disk space is less than 15%
@@ -160,10 +179,13 @@ def disk_clean_up(db_names):  # Delete old zip backup files when disk space is l
             for files in os.listdir(cleanup_path):
                 a.append(files)
                 a.sort()
-                filetodel = a[0]
-                del a[0]
-                os.remove(os.path.join(cleanup_path, filetodel))
-                logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
+                if len(a) > 6 :
+                    filetodel = a[0]
+                    del a[0]
+                    os.remove(os.path.join(cleanup_path, filetodel))
+                    logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
+                elif len(a) <= 6:
+                    logging.error("Disk cleanup failed. Nothing to delete.")
 
 
 disk_space = psutil.disk_usage(storage_dir)
@@ -178,5 +200,36 @@ except AssertionError, msg:
 # Unlock and delete temp file
 un_lock()
 
-# Switch Mongodb to replica set
-switch_mongo('/etc/mongod.conf.replica','/etc/mongod.conf')
+# Switch Mongodb single to replica set
+def switch_to_replica():
+    logging.info("Start switching MongoDB to replica set. Stopping service")
+    try:
+        stop_check = subprocess.check_call(
+        [
+            'service',
+            'mongod',
+            'stop'
+        ])
+    except subprocess.CalledProcessError as e:
+            if e.returncode !=0:
+                logging.error("Failed To Stop mongodb service. Check log. ReturnCode is %s" % e.returncode)
+                sys.exit("Failed To Stop mongodb service.Check log %s and ReturnCode" % (e.output))
+    
+    #logging_info(stop_check)
+    os.remove(mongodb_conf)
+    logging.info("Copying Mongodb config")
+    copyfile('/etc/mongod.conf.replica', mongodb_conf)
+    logging.info("Starting MongoDB service")
+    try:
+        start_check = subprocess.check_call(
+        [
+            'service',
+            'mongod',
+            'start'
+        ])
+    except subprocess.CalledProcessError as e:
+            if e.returncode !=0:
+                logging.error("Failed To Start mongodb service. Check log. ReturnCode is %s" % e.returncode)
+                sys.exit("Failed To Stop mongodb service. Check log %s and ReturnCode" % (e.output))
+    logging.info("Switching MongoDB to replica ended successfully.")
+switch_to_replica()
