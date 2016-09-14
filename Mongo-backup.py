@@ -18,17 +18,12 @@ from pymongo import MongoClient
 
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename='/var/log/mongo-backup.log', level=logging.INFO)
 
-# db auth credentials
-# db_login = "admin"
-# db_pass = "abbyy231*"
-
 work_dir = "/datadrive/opt/mongodbbackup/work/"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/Mongo.lock"
 
 # Connect to Mongodb. Get list of all database names
 db_conn = MongoClient('localhost', 27017)
-# db_conn.admin.authenticate(db_login, db_pass)
 db_names = db_conn.database_names()
 
 # Unlock and delete lock file.
@@ -104,30 +99,32 @@ def switch_to_replica():
 class MongoDB:
 
     def __init__(self, db_names):
-        for x in db_names:
-            if x != "local":
-                self.db_name = x
+        for db_name in db_names:
+            if db_name != "local":
+                self.db_name = dbname
+                self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
                 self.mongo_backup(self.db_name)
                 self.mongo_clean_up(self.db_name)
+                
+        # Switch Mongod to replica
+        switch_to_replica()        
+        mongo_zip_result(self.db_name, self.now)
 
     def mongo_backup(self, db_name):
-        self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+        
         logging.info("Running mongodump for DB: %s " % db_name)
         try:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
                     [
                         'mongodump',
-                        # '-u', '%s' % db_login,
-                        # '-p', '%s' % db_pass,
-                        # '--authenticationDatabase','%s' %'admin',
-                        '-d', '%s' % self.db_name,
-                        # '--port', '%s' % port,
+                        '-d', '%s' % db_name,
                         '-o', '%s' % work_dir
                     ])
         except subprocess.CalledProcessError as e:
                     logging.error("Failed to run mongodump. Output Error %s" % e.output)
                     sys.exit("Failed to run mongodump. Output Error %s" % e.output)        
         
+    def mongo_zip_result(self, db_name, now):
         archive_name = self.db_name + '.' + self.now
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
@@ -234,5 +231,3 @@ except AssertionError, msg:
 # Unlocking and deleting temp file
 un_lock()
 
-# Switch Mongod to replica
-switch_to_replica()
