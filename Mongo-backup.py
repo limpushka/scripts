@@ -97,15 +97,13 @@ class MongoDB:
     def __init__(self, db_names):
         for db_name in db_names:
             if db_name != "local":
-                self.db_name = dbname
+                self.db_name = db_name
                 self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
                 self.mongo_backup(self.db_name)
                 self.mongo_clean_up(self.db_name)
+        
         # Switch Mongod to replica        
         switch_to_replica() 
-                
-        
-               
         mongo_zip_result(self.db_name, self.now)
 
     def mongo_backup(self, db_name):
