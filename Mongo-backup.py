@@ -108,7 +108,7 @@ class MongoDB:
         for db_name in db_names:
                 if db_name != "local" and db_name != "et_api":
                     self.db_name = db_name
-                    self.mongo_zip_result(self.db_name, self.dumptime)
+                    self.mongo_zip_result(self.db_name)
 
     def mongo_backup(self, db_name):
         
@@ -125,7 +125,7 @@ class MongoDB:
                     sys.exit("Failed to run mongodump. Output Error %s" % e.output)        
         logging.info("Mongodump for DB: %s ended Successfully" % db_name)        
         
-    def mongo_zip_result(self, db_name, dumptime):
+    def mongo_zip_result(self, db_name):
         
         archive_name = self.db_name + '.' + self.dumptime
         source_name = work_dir + self.db_name
