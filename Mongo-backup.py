@@ -112,7 +112,7 @@ class MongoDB:
 
     def mongo_backup(self, db_name):
         
-        logging.info("Running mongodump for DB: %s " % db_name)
+        logging.info("Running mongodump for DB: %s , dumptime: %d" % (db_name, self.dumptime))
         try:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
                     [
@@ -145,7 +145,7 @@ class MongoDB:
                     arcname = absname[len(abs_src) + 1:]
                     zf.write(absname, arcname)
             logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
-            logging.info("Zipping for %s Done Successfully" %self.db_name)
+            logging.info("Zipping for %s Done Successfully" %archive_name)
 
     def mongo_clean_up(self, db_name):
             archive_path = os.path.join(storage_dir, self.db_name)
