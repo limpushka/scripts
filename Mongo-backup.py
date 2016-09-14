@@ -106,7 +106,7 @@ class MongoDB:
         switch_to_replica() 
         
         for db_name in db_names:
-                if db_name != "local" and db_name != "et_api":
+                if db_name != "local":
                     self.db_name = db_name
                     self.mongo_zip_result(self.db_name)
 
@@ -141,8 +141,8 @@ class MongoDB:
                     absname = os.path.abspath(os.path.join(dirname, filename))
                     arcname = absname[len(abs_src) + 1:]
                     zf.write(absname, arcname)
-            logging.info("End zip dump for DB: %s and saving zip file to %s " % (self.db_name, archive_path))
-        logging.info("Backup Done Successfully")
+            logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
+            logging.info("Zipping for %s Done Successfully" %self.db_name)
 
     def mongo_clean_up(self, db_name):
             archive_path = os.path.join(storage_dir, self.db_name)
@@ -156,7 +156,7 @@ class MongoDB:
                 del a[0]
                 os.remove(os.path.join(archive_path,filetodel))
                 logging.info("Starting cleanup process. File %s was deleted from directory %s" % (filetodel, archive_path))
-            logging.info("Cleanup Done. Total files:%d in Backup Directory %s" % (len(a), self.db_name))
+                logging.info("Cleanup Done. Total files:%d in Backup Directory %s" % (len(a), self.db_name))
                 
 
 def disk_clean_up(db_names):  # Delete old archive backup files when free disk space is less than 15%
