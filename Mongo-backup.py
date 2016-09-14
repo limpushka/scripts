@@ -99,7 +99,6 @@ class MongoDB:
         for db_name in db_names:
             if db_name != "local" and db_name != "et_api":
                 self.db_name = db_name
-                self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
                 self.mongo_backup(self.db_name)
                 self.mongo_clean_up(self.db_name)
                 time.sleep(2)
@@ -113,7 +112,7 @@ class MongoDB:
                     self.mongo_zip_result(self.db_name)
 
     def mongo_backup(self, db_name):
-        
+        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
         logging.info("Running mongodump for DB: %s , dumptime: %s" % (db_name, self.dumptime))
         try:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
