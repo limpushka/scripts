@@ -96,7 +96,7 @@ class MongoDB:
 
     def __init__(self, db_names):
         for db_name in db_names:
-            if db_name != "local" and db_name != "et_api":
+            if db_name != "local":
                 self.db_name = db_name
                 self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
                 self.mongo_backup(self.db_name)
@@ -106,7 +106,7 @@ class MongoDB:
         switch_to_replica() 
         
         for db_name in db_names:
-                if db_name != "local" and db_name != "et_api":
+                if db_name != "local":
                     self.db_name = db_name
                     self.mongo_zip_result(self.db_name)
 
