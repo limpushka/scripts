@@ -106,7 +106,7 @@ class MongoDB:
         
         # Switch Mongod to replica        
         switch_to_replica() 
-        
+        time.sleep(2)
         for db_name in db_names:
                 if db_name != "local" and db_name != "et_api":
                     self.db_name = db_name
