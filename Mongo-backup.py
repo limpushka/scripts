@@ -126,7 +126,7 @@ class MongoDB:
         logging.info("Mongodump for DB: %s ended Successfully" % db_name)        
         
     def mongo_zip_result(self, db_name, dumptime):
-        logging.info("Start zipping dump for DB: %s. Archive zip file name %s " % (self.db_name, archive_name))
+        
         archive_name = self.db_name + '.' + self.dumptime
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
@@ -135,7 +135,8 @@ class MongoDB:
             os.makedirs(os.path.join(storage_dir, self.db_name))
 
         zip_name = os.path.join(archive_path, "%s.zip" % archive_name)
-
+        logging.info("Start zipping dump for DB: %s. Archive zip file name %s " % (self.db_name, archive_name))
+        
         with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as zf:  # Zipping the result
             abs_src = os.path.abspath(source_name)
             for dirname, subdirs, files in os.walk(abs_src):
