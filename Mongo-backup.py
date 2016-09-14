@@ -180,7 +180,8 @@ def disk_clean_up(db_names):  # Delete old archive backup files when free disk s
 
 # Start cleaning working directory
 logging.info("CLeaning working directory")
-rmtree(work_dir) # Remove all files in work_dir
+if os.path.exists(work_dir):
+    rmtree(work_dir) # Remove all files in work_dir
 
 # Check, if file is locked and exits, if true
 if os.path.exists(lockfile):
