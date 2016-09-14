@@ -104,8 +104,10 @@ class MongoDB:
         
         # Switch Mongod to replica        
         switch_to_replica() 
+        
         for db_name in db_names:
-                if db_name != "local" and db_name != "et_api":        
+                if db_name != "local" and db_name != "et_api":
+                    self.db_name = db_name
                     self.mongo_zip_result(self.db_name)
 
     def mongo_backup(self, db_name):
