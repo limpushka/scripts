@@ -127,7 +127,7 @@ class MongoDB:
         
     def mongo_zip_result(self, db_name):
         
-        archive_name = self.db_name + '.' + self.dumptime
+        archive_name = self.db_name + '.' + self.db_name.dumptime
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
 
