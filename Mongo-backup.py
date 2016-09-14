@@ -96,9 +96,9 @@ class MongoDB:
 
     def __init__(self, db_names):
         for db_name in db_names:
-            if db_name != "local":
+            if db_name != "local" and db_name != "et_api":
                 self.db_name = db_name
-                self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
+                db_name.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
                 self.mongo_backup(self.db_name)
                 self.mongo_clean_up(self.db_name)
         
@@ -106,7 +106,7 @@ class MongoDB:
         switch_to_replica() 
         
         for db_name in db_names:
-                if db_name != "local":
+                if db_name != "local" and db_name != "et_api":
                     self.db_name = db_name
                     self.mongo_zip_result(self.db_name)
 
@@ -123,9 +123,11 @@ class MongoDB:
         except subprocess.CalledProcessError as e:
                     logging.error("Failed to run mongodump. Output Error %s" % e.output)
                     sys.exit("Failed to run mongodump. Output Error %s" % e.output)        
+        logging.info("Mongodump for DB: %s ended Successfully" % db_name)        
         
     def mongo_zip_result(self, db_name):
-        archive_name = self.db_name + '.' + self.now
+        logging.info("Start zipping dump for DB: %s. Archive zip file name %s " % (self.db_name, archive_name))
+        archive_name = self.db_name + '.' + self.db_name.now
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
 
