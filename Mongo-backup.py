@@ -22,10 +22,6 @@ work_dir = "/datadrive/opt/mongodbbackup/work/"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/Mongo.lock"
 
-# Connect to Mongodb. Get list of all database names
-db_conn = MongoClient('localhost', 27017)
-db_names = db_conn.database_names()
-
 # Unlock and delete lock file.
 def un_lock():
     lock.close()
@@ -105,9 +101,11 @@ class MongoDB:
                 self.now = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
                 self.mongo_backup(self.db_name)
                 self.mongo_clean_up(self.db_name)
+        # Switch Mongod to replica        
+        switch_to_replica() 
                 
-        # Switch Mongod to replica
-        switch_to_replica()        
+        
+               
         mongo_zip_result(self.db_name, self.now)
 
     def mongo_backup(self, db_name):
@@ -217,6 +215,10 @@ elif args.daily:
 
 # Switch Mongod to single 
 switch_to_single()
+
+# Connect to Mongodb. Get list of all database names
+db_conn = MongoClient('localhost', 27017)
+db_names = db_conn.database_names()
 
 # Checks free disk space and cleans storage directory  if disk usage is higher than 85%
 disk_space = psutil.disk_usage(storage_dir)
