@@ -95,39 +95,28 @@ def switch_to_replica():
 
 class MongoDB:
 
-    def __init__(self, db_names):
-        for db_name in db_names:
-            self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H-%M-%S')
-            self.db_name = db_name
-            if db_name != "local" and db_name != "et_api":
-                self.mongo_backup(self.db_name)
-                self.mongo_clean_up(self.db_name)
-                time.sleep(2)
+    def __init__(self):
+        #self.db_name = db_name
+        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
         
-        # Switch Mongod to replica        
-        switch_to_replica() 
-        time.sleep(2)
-        for db_name in db_names:
-                if db_name != "local" and db_name != "et_api":
-                    self.db_name = db_name
-                    self.mongo_zip_result(self.db_name)
-
-    def mongo_backup(self, db_name):
-        
-        logging.info("Running mongodump for DB: %s , dumptime: %s" % (db_name, self.dumptime))
+             
+    def mongo_backup(self):
+        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+        logging.info("Running mongodump for DB: %s , dumptime: %s" % (self.db_name, self.dumptime))
         try:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
                     [
                         'mongodump',
-                        '-d', '%s' % db_name,
+                        '-d', '%s' % self.db_name,
                         '-o', '%s' % work_dir
                     ])
         except subprocess.CalledProcessError as e:
                     logging.error("Failed to run mongodump. Output Error %s" % e.output)
                     sys.exit("Failed to run mongodump. Output Error %s" % e.output)        
-        logging.info("Mongodump for DB: %s ended Successfully" % db_name)        
+        logging.info("Mongodump for DB: %s ended Successfully" % self.db_name)        
         
-    def mongo_zip_result(self, db_name):
+    def mongo_zip_result(self):
+        
         archive_name = self.db_name + '.' + self.dumptime
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
@@ -148,7 +137,7 @@ class MongoDB:
             logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
             logging.info("Zipping for %s Done Successfully" %archive_name)
 
-    def mongo_clean_up(self, db_name):
+    def mongo_clean_up(self):
             archive_path = os.path.join(storage_dir, self.db_name)
             a = []
             for files in os.listdir(archive_path):
@@ -232,11 +221,25 @@ disk_space = psutil.disk_usage(storage_dir)
 while disk_space.percent >= 85:
     disk_clean_up(db_names)
 
-try:
-    MongoDB(db_names)
-except AssertionError, msg:
-    logging.error(msg)
+for db_name in db_names:
+    if db_name != "local":
+        try:
+            db_name = MongoDB()
+            db_name.mongo_backup()
+            db_name.mongo_clean_up()
+        except AssertionError, msg:
+            logging.error(msg)
 
+# Swiching to single
+switch_to_single()
+
+for db_name in db_names:
+    if db_name != "local":
+        try:
+            db_name.mongo_zip_result            
+        except AssertionError, msg:
+            logging.error(msg)
+            
 # Unlocking and deleting temp file
 un_lock()
 
