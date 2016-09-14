@@ -112,7 +112,7 @@ class MongoDB:
 
     def mongo_backup(self, db_name):
         
-        logging.info("Running mongodump for DB: %s , dumptime: %d" % (db_name, self.dumptime))
+        logging.info("Running mongodump for DB: %s , dumptime: %s" % (db_name, self.dumptime))
         try:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
                     [
