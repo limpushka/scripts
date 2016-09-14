@@ -104,8 +104,9 @@ class MongoDB:
         
         # Switch Mongod to replica        
         switch_to_replica() 
-        
-        self.mongo_zip_result(self.db_name, self.now)
+        for db_name in db_names:
+                if db_name != "local" and db_name != "et_api":        
+                    self.mongo_zip_result(self.db_name)
 
     def mongo_backup(self, db_name):
         
@@ -121,7 +122,7 @@ class MongoDB:
                     logging.error("Failed to run mongodump. Output Error %s" % e.output)
                     sys.exit("Failed to run mongodump. Output Error %s" % e.output)        
         
-    def mongo_zip_result(self, db_name, now):
+    def mongo_zip_result(self, db_name):
         archive_name = self.db_name + '.' + self.now
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
