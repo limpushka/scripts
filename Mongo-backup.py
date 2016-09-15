@@ -98,7 +98,7 @@ class MongoDB:
     def __init__(self):
         self.db_name = db_name
         self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
-        
+        self.mongodb_list.append(self)
              
     def mongo_backup(self):
         self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
@@ -233,12 +233,11 @@ for db_name in db_names:
 # Swiching to single
 switch_to_single()
 
-for db_name in db_names:
-    if db_name != "local":
-        try:
-            db_name.mongo_zip_result()            
-        except AssertionError, msg:
-            logging.error(msg)
+for db_name in MongoDB.mongodb_list:
+    try:
+        db_name.mongo_zip_result()            
+    except AssertionError, msg:
+        logging.error(msg)
             
 # Unlocking and deleting temp file
 un_lock()
