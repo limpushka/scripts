@@ -20,8 +20,23 @@ from pymongo import MongoClient
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename='/var/log/mongo-backup.log', level=logging.INFO)
 
 work_dir = "/datadrive/opt/mongodbbackup/work/"
+cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
 mongodb_conf = "/etc/mongod.conf"
-lockfile = "/tmp/Mongo.lock"
+lockfile = "/tmp/mongo-backup.lock"
+
+# Checking input arguments
+if args.monthly:
+    storage_dir = "/datadrive/opt/mongodbbackup/storage/monthly"
+    max_backups = 2
+    logging.info("Starting monthly MongoDB backup")
+elif args.weekly:
+    storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly"
+    max_backups = 4    
+    logging.info("Starting weekly MongoDB backup")
+elif args.daily:
+    storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
+    max_backups = 1000
+    logging.info("Starting daily MongoDB backup")
 
 # Unlock and delete lock file.
 def un_lock():
@@ -158,7 +173,6 @@ class MongoDB:
                 
 
 def disk_clean_up(db_names):  # Delete old archive backup files when free disk space is less than 15%
-    cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
     for x in db_names:
         if x != 'local':
             cleanup_path = os.path.join(cleanup_dir, x)
@@ -180,18 +194,18 @@ def disk_clean_up(db_names):  # Delete old archive backup files when free disk s
 
 """Script run start's here"""
 
-# Start cleaning working directory
-logging.info("CLeaning working directory")
-if os.path.exists(work_dir):
-    rmtree(work_dir) # Remove all files in work_dir
-
 # Check, if file is locked and exits, if true
 if os.path.exists(lockfile):
     logging.error("Another instance of this script is Running")
     sys.exit("Another instance of this script is Running")
 else:
     lock = zc.lockfile.LockFile(lockfile, content_template='{pid}; {hostname}')
-                                        
+
+# Start cleaning working directory
+logging.info("CLeaning working directory")
+if os.path.exists(work_dir):
+    rmtree(work_dir) # Remove all files in work_dir                                        
+
 # Key options for script launch
 parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
 parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
@@ -200,20 +214,6 @@ parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily
                                      
 args = parser.parse_args()
                                     
-# Checking input arguments
-if args.monthly:
-    storage_dir = "/datadrive/opt/mongodbbackup/storage/monthly"
-    max_backups = 2
-    logging.info("Starting monthly MongoDB backup")
-elif args.weekly:
-    storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly"
-    max_backups = 4    
-    logging.info("Starting weekly MongoDB backup")
-elif args.daily:
-    storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
-    max_backups = 1000
-    logging.info("Starting daily MongoDB backup")
-
 # Switch Mongod to single 
 switch_to_single()
 
