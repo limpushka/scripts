@@ -24,6 +24,14 @@ cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
 
+# Key options for script launch
+parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
+parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
+parser.add_argument('--weekly', '-w', action="store_true", help='Option for Weekly Backup')
+parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily Backup')
+                                     
+args = parser.parse_args()
+
 # Checking input arguments
 if args.monthly:
     storage_dir = "/datadrive/opt/mongodbbackup/storage/monthly"
@@ -37,7 +45,7 @@ elif args.daily:
     storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
     max_backups = 1000
     logging.info("Starting daily MongoDB backup")
-
+    
 # Unlock and delete lock file.
 def un_lock():
     lock.close()
@@ -205,14 +213,6 @@ else:
 logging.info("CLeaning working directory")
 if os.path.exists(work_dir):
     rmtree(work_dir) # Remove all files in work_dir                                        
-
-# Key options for script launch
-parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
-parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
-parser.add_argument('--weekly', '-w', action="store_true", help='Option for Weekly Backup')
-parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily Backup')
-                                     
-args = parser.parse_args()
                                     
 # Switch Mongod to single 
 switch_to_single()
