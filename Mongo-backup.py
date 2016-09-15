@@ -141,11 +141,12 @@ class MongoDB:
     def mongo_clean_up(self):
             archive_path = os.path.join(storage_dir, self.db_name)
             a = []
-            for files in os.listdir(archive_path):
-                if not os.path.exists(archive_path):
-                    continue                
-                a.append(files)
-               
+            if os.path.exists(archive_path):
+                for files in os.listdir(archive_path):       
+                    a.append(files)
+            else:
+                continue 
+            
             while len(a) > max_backups:
                 a.sort()
                 filetodel = a[0]
