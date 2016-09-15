@@ -142,6 +142,8 @@ class MongoDB:
             archive_path = os.path.join(storage_dir, self.db_name)
             a = []
             for files in os.listdir(archive_path):
+                if not os.path.exists(archive_path):
+                    continue                
                 a.append(files)
                
             while len(a) > max_backups:
