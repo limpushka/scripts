@@ -94,6 +94,7 @@ def switch_to_replica():
     logging.info("Switching Mongod to replica ended successfully.")
 
 class MongoDB:
+    mongodb_list = []
 
     def __init__(self):
         self.db_name = db_name
