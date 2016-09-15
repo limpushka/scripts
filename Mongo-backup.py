@@ -96,7 +96,7 @@ def switch_to_replica():
 class MongoDB:
 
     def __init__(self):
-        #self.db_name = db_name
+        self.db_name = db_name
         self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
         
              
