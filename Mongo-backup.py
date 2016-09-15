@@ -232,7 +232,7 @@ for db_name in db_names:
             logging.error(msg)
 
 # Swiching to single
-switch_to_single()
+switch_to_replica()
 
 for db_name in MongoDB.mongodb_list:
     try:
