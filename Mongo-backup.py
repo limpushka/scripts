@@ -236,7 +236,7 @@ switch_to_single()
 for db_name in db_names:
     if db_name != "local":
         try:
-            db_name.mongo_zip_result            
+            db_name.mongo_zip_result()            
         except AssertionError, msg:
             logging.error(msg)
             
