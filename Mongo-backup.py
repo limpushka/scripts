@@ -243,3 +243,5 @@ for db_name in MongoDB.mongodb_list:
 # Unlocking and deleting temp file
 un_lock()
 
+# Final Message
+logging.info("All task's for current backup schedule done.")
