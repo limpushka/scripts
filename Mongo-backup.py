@@ -35,22 +35,24 @@ args = parser.parse_args()
 # Checking input arguments
 if args.monthly:
     storage_dir = "/datadrive/opt/mongodbbackup/storage/monthly"
-    if not os.path.exists(storage_dir):  # Check if backup directory exists
-        os.makedirs(storage_dir)   
+    check_dir(storage_dir)  
     max_backups = 2
     logging.info("Starting monthly MongoDB backup")
 elif args.weekly:
     storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly"
-    if not os.path.exists(storage_dir):  # Check if backup directory exists
-        os.makedirs(storage_dir)    
+    check_dir(storage_dir)
     max_backups = 4    
     logging.info("Starting weekly MongoDB backup")
 elif args.daily:
     storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
-    if not os.path.exists(storage_dir):  # Check if backup directory exists
-        os.makedirs(storage_dir)    
+    check_dir(storage_dir)   
     max_backups = 1000
     logging.info("Starting daily MongoDB backup")
+    
+# Check if  directory exists? otherwise creates it
+def check_dir(path):
+    if not os.path.exists(path):  
+        os.makedirs(path)     
     
 # Unlock and delete lock file.
 def un_lock():
@@ -151,8 +153,7 @@ class MongoDB:
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
 
-        if not os.path.exists(archive_path):  # Check if backup directory exists
-            os.makedirs(os.path.join(storage_dir, self.db_name))
+        check_dir(archive_path)
 
         zip_name = os.path.join(archive_path, "%s.zip" % archive_name)
         logging.info("Start zipping dump for DB: %s. Archive zip file name %s " % (self.db_name, archive_name))
@@ -171,8 +172,7 @@ class MongoDB:
             archive_path = os.path.join(storage_dir, self.db_name)
             a = []
 
-            if not os.path.exists(archive_path):  # Check if backup directory exists
-                os.makedirs(archive_path)  
+            check_dir(archive_path)  
                 
             for files in os.listdir(archive_path):  
                 a.append(files)                
