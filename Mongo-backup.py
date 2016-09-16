@@ -24,6 +24,11 @@ cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
 
+# Check if  directory exists? otherwise creates it
+def check_dir(path):
+    if not os.path.exists(path):  
+        os.makedirs(path) 
+
 # Key options for script launch
 parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
 parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
@@ -47,12 +52,7 @@ elif args.daily:
     storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
     check_dir(storage_dir)   
     max_backups = 1000
-    logging.info("Starting daily MongoDB backup")
-    
-# Check if  directory exists? otherwise creates it
-def check_dir(path):
-    if not os.path.exists(path):  
-        os.makedirs(path)     
+    logging.info("Starting daily MongoDB backup")    
     
 # Unlock and delete lock file.
 def un_lock():
