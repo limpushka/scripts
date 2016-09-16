@@ -42,13 +42,13 @@ if args.monthly:
 elif args.weekly:
     storage_dir = "/datadrive/opt/mongodbbackup/storage/weekly"
     if not os.path.exists(storage_dir):  # Check if backup directory exists
-            os.makedirs(storage_dir)    
+        os.makedirs(storage_dir)    
     max_backups = 4    
     logging.info("Starting weekly MongoDB backup")
 elif args.daily:
     storage_dir = "/datadrive/opt/mongodbbackup/storage/daily"
     if not os.path.exists(storage_dir):  # Check if backup directory exists
-            os.makedirs(storage_dir)    
+        os.makedirs(storage_dir)    
     max_backups = 1000
     logging.info("Starting daily MongoDB backup")
     
