@@ -20,7 +20,7 @@ from pymongo import MongoClient
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename='/var/log/mongo-backup.log', level=logging.INFO)
 
 work_dir = "/datadrive/opt/mongodbbackup/work/"
-cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
+cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily/"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
 
@@ -190,13 +190,15 @@ def disk_clean_up():  # Delete old archive backup files when free disk space is 
     for db_name in MongoDB.mongodb_list:
         cleanup_path = os.path.join(cleanup_dir, db_name)
         logging.info("Starting disk_clean_up function for %s" % db_name)
+        
         if not os.path.exists(cleanup_path):
             continue
+        
         a = []
         for files in os.listdir(cleanup_path):
             a.append(files)
             a.sort()
-            if len(a) > 2 :
+            while len(a) > 2 :
                 filetodel = a[0]
                 del a[0]
                 os.remove(os.path.join(cleanup_path, filetodel))
@@ -230,8 +232,11 @@ db_names = db_conn.database_names()
 # Checks free disk space and cleans storage directory  if disk usage is higher than 85%
 disk_space = psutil.disk_usage(storage_dir)
 while disk_space.percent >= 85:
-    disk_clean_up()
-
+    try:
+        disk_clean_up()
+    except AssertionError, msg:
+        logging.error(msg)
+        
 for db_name in db_names:
     if db_name != "local":
         try:
