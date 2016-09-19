@@ -212,7 +212,7 @@ def check_backup_count(db_names):
                     b[db_name] =  True
                 else:
                     b[db_name] = False
-    logging.info(print(b))
+    
     
     for key in b:
         if b[key] == True:
