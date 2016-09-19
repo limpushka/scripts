@@ -200,6 +200,7 @@ def disk_clean_up(db_name):  # Delete old archive backup files when free disk sp
     
                     
 def check_backup_count(db_names):
+    result = False
     b = {}
     for db_name in db_names:
         if db_name != "local":
@@ -212,8 +213,8 @@ def check_backup_count(db_names):
                 else:
                     b[db_name] = False
                     
-    for k in b:
-        if b[k] == True:
+    for key,val in b.iteritems:
+        if b[key] == True:
             result = True
         else:
             result = False
