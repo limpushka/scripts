@@ -190,11 +190,12 @@ def disk_clean_up(db_names):  # Delete old archive backup files when free disk s
     for db_name in db_names:
         logging.info("Starting disk_clean_up function for %s" % db_name)
         cleanup_path = os.path.join(cleanup_dir, db_name)
-        a = []
+        
         
         if os.path.exists(cleanup_path):
                                     
             for files in os.listdir(cleanup_path):
+                a = []
                 a.append(files)
                 
                 while len(a) > 2 :
