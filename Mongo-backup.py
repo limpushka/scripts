@@ -191,17 +191,35 @@ def disk_clean_up(db_name):  # Delete old archive backup files when free disk sp
     for files in os.listdir(cleanup_path):
         a = []
         a.append(files)
-        if len(a) > 2 :
-            a.sort()
-            filetodel = a[0]
-            del a[0]
-            os.remove(os.path.join(cleanup_path, filetodel))
-            logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
-        else :
-            logging.error("Disk cleanup failed. Nothing to delete.")
-            sys.exit("Disk cleanup failed. Nothing to delete.")
+    if len(a) > 2 :
+        a.sort()
+        filetodel = a[0]
+        del a[0]
+        os.remove(os.path.join(cleanup_path, filetodel))
+        logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
+    
                     
-      
+def check_backup_count(db_names):
+    b = {}
+    for db_name in db_names:
+        if db_name != "local":
+            cleanup_path = os.path.join(cleanup_dir, db_name)
+            for files in os.listdir(cleanup_path):
+                a = []
+                a.append(files)
+                if len(a) > 2 :
+                    b[db_name] =  True
+                else:
+                    b[db_name] = False
+                    
+    for k in b.items():
+        if k == True:
+            result = True
+        else:
+            result = False
+    return result
+            
+               
 
 
 """Script run start's here"""
@@ -227,7 +245,7 @@ db_names = db_conn.database_names()
 
 # Checks free disk space and cleans storage directory  if disk usage is higher than 85%
 disk_space = psutil.disk_usage(storage_dir)
-while disk_space.percent >= 85:
+while disk_space.percent >= 85 and check_backup_count(db_names):
     try:
         for db_name in db_names:
             if db_name != "local":
@@ -238,6 +256,9 @@ while disk_space.percent >= 85:
                     disk_clean_up(db_name)
     except AssertionError, msg:
         logging.error(msg)
+else :
+    logging.error("Disk cleanup failed. Nothing to delete.")
+    sys.exit("Disk cleanup failed. Nothing to delete.")
         
 for db_name in db_names:
     if db_name != "local":
