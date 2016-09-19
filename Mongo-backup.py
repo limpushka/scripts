@@ -192,12 +192,12 @@ def disk_clean_up(db_name):  # Delete old archive backup files when free disk sp
     for files in os.listdir(cleanup_path):
         a = []
         a.append(files)
-    if len(a) > 2 :
-        a.sort()
-        filetodel = a[0]
-        del a[0]
-        os.remove(os.path.join(cleanup_path, filetodel))
-        logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
+        if len(a) > 2 :
+            a.sort()
+            filetodel = a[0]
+            del a[0]
+            os.remove(os.path.join(cleanup_path, filetodel))
+            logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
     
                     
 def check_backup_count(db_names):
