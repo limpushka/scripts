@@ -226,8 +226,13 @@ db_conn = MongoClient('localhost', 27017)
 db_names = db_conn.database_names()
 
 # Checks free disk space and cleans storage directory  if disk usage is higher than 85%
-disk_space = psutil.disk_usage(storage_dir)
-while disk_space.percent >= 85:
+def get_disk_space():
+    disk_space = psutil.disk_usage(storage_dir)
+    return disk_space.percent
+    
+
+
+while get_disk_space() >= 85:
     try:
         for db_name in db_names:
             if db_name != "local":
