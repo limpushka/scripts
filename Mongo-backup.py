@@ -212,8 +212,8 @@ def check_backup_count(db_names):
                 else:
                     b[db_name] = False
                     
-    for k in b.items():
-        if k == True:
+    for k in b:
+        if b[k] == True:
             result = True
         else:
             result = False
