@@ -212,7 +212,8 @@ def check_backup_count(db_names):
                     b[db_name] =  True
                 else:
                     b[db_name] = False
-                    
+    logging.info(print(b))
+    
     for key in b:
         if b[key] == True:
             result = True
@@ -246,7 +247,7 @@ db_names = db_conn.database_names()
 
 # Checks free disk space and cleans storage directory  if disk usage is higher than 85%
 disk_space = psutil.disk_usage(storage_dir)
-while (disk_space.percent >= 85 and check_backup_count(db_names)):
+if disk_space.percent >= 85:
     try:
         for db_name in db_names:
             if db_name != "local":
@@ -257,9 +258,9 @@ while (disk_space.percent >= 85 and check_backup_count(db_names)):
                     disk_clean_up(db_name)
     except AssertionError, msg:
         logging.error(msg)
-else :
-    logging.error("Disk cleanup failed. Nothing to delete.")
-    sys.exit("Disk cleanup failed. Nothing to delete.")
+#else :
+    #logging.error("Disk cleanup failed. Nothing to delete.")
+    #sys.exit("Disk cleanup failed. Nothing to delete.")
         
 for db_name in db_names:
     if db_name != "local":
