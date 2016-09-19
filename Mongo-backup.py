@@ -203,7 +203,7 @@ def disk_clean_up():  # Delete old archive backup files when free disk space is 
                 del a[0]
                 os.remove(os.path.join(cleanup_path, filetodel))
                 logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
-            elif len(a) <= 2:
+            else :
                 logging.error("Disk cleanup failed. Nothing to delete.")
                 sys.exit("Disk cleanup failed. Nothing to delete.")
 
