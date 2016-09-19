@@ -20,7 +20,7 @@ from pymongo import MongoClient
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename='/var/log/mongo-backup.log', level=logging.INFO)
 
 work_dir = "/datadrive/opt/mongodbbackup/work/"
-cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily/"
+cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
 
@@ -197,15 +197,15 @@ def disk_clean_up():  # Delete old archive backup files when free disk space is 
         a = []
         for files in os.listdir(cleanup_path):
             a.append(files)
+        while len(a) > 2 :
             a.sort()
-            while len(a) > 2 :
-                filetodel = a[0]
-                del a[0]
-                os.remove(os.path.join(cleanup_path, filetodel))
-                logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
-            else :
-                logging.error("Disk cleanup failed. Nothing to delete.")
-                sys.exit("Disk cleanup failed. Nothing to delete.")
+            filetodel = a[0]
+            del a[0]
+            os.remove(os.path.join(cleanup_path, filetodel))
+            logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
+        else :
+            logging.error("Disk cleanup failed. Nothing to delete.")
+            sys.exit("Disk cleanup failed. Nothing to delete.")
 
 
 """Script run start's here"""
