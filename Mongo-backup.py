@@ -186,24 +186,24 @@ class MongoDB:
                 logging.info("Cleanup Done. Total files:%d in Backup Directory %s" % (len(a), self.db_name))
                 
 
-def disk_clean_up(db_names):  # Delete old archive backup files when free disk space is less than 15%
-    for x in db_names:
-        if x != 'local':
-            cleanup_path = os.path.join(cleanup_dir, x)
-            if not os.path.exists(cleanup_path):
-                continue
-            a = []
-            for files in os.listdir(cleanup_path):
-                a.append(files)
-                a.sort()
-                if len(a) > 6 :
-                    filetodel = a[0]
-                    del a[0]
-                    os.remove(os.path.join(cleanup_path, filetodel))
-                    logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
-                elif len(a) <= 6:
-                    logging.error("Disk cleanup failed. Nothing to delete.")
-                    sys.exit("Disk cleanup failed. Nothing to delete.")
+def disk_clean_up():  # Delete old archive backup files when free disk space is less than 15%
+    for db_name in MongoDB.mongodb_list:
+        cleanup_path = os.path.join(cleanup_dir, db_name)
+        logging.info("Starting disk_clean_up function for %s" % db_name)
+        if not os.path.exists(cleanup_path):
+            continue
+        a = []
+        for files in os.listdir(cleanup_path):
+            a.append(files)
+            a.sort()
+            if len(a) > 2 :
+                filetodel = a[0]
+                del a[0]
+                os.remove(os.path.join(cleanup_path, filetodel))
+                logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
+            elif len(a) <= 2:
+                logging.error("Disk cleanup failed. Nothing to delete.")
+                sys.exit("Disk cleanup failed. Nothing to delete.")
 
 
 """Script run start's here"""
@@ -230,14 +230,13 @@ db_names = db_conn.database_names()
 # Checks free disk space and cleans storage directory  if disk usage is higher than 85%
 disk_space = psutil.disk_usage(storage_dir)
 while disk_space.percent >= 85:
-    disk_clean_up(db_names)
+    disk_clean_up()
 
 for db_name in db_names:
     if db_name != "local":
         try:
             db_name = MongoDB()
-            db_name.mongo_backup()
-            db_name.mongo_clean_up()
+            db_name.mongo_backup() 
         except AssertionError, msg:
             logging.error(msg)
 
@@ -246,7 +245,8 @@ switch_to_replica()
 
 for db_name in MongoDB.mongodb_list:
     try:
-        db_name.mongo_zip_result()            
+        db_name.mongo_zip_result()
+        db_name.mongo_clean_up()
     except AssertionError, msg:
         logging.error(msg)
             
