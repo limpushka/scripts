@@ -17,12 +17,14 @@ import zc.lockfile
 from shutil import copyfile, rmtree
 from pymongo import MongoClient
 
-logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename='/var/log/mongo-backup.log', level=logging.INFO)
-
 work_dir = "/datadrive/opt/mongodbbackup/work/"
 cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
+fresh_backup_dir = "/datadrive/opt/mongobackup/fresh/"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
+logfile = '/var/log/mongo-backup.log'
+
+logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename = logfile , level=logging.INFO)
 
 # Check if  directory exists? otherwise creates it
 def check_dir(path):
@@ -231,27 +233,24 @@ def get_disk_space():
     return disk_space.percent
     
 
-
 while get_disk_space() >= 85:
     try:
         for db_name in db_names:
-            if db_name != "local":
-                cleanup_path = os.path.join(cleanup_dir, db_name)
-                if not os.path.exists(cleanup_path):
-                    continue
-                else:
-                    disk_clean_up(db_name)
+            cleanup_path = os.path.join(cleanup_dir, db_name)
+            if not os.path.exists(cleanup_path):
+                continue
+            else:
+                disk_clean_up(db_name)
     except AssertionError, msg:
         logging.error(msg)
 
         
 for db_name in db_names:
-    if db_name != "local":
-        try:
-            db_name = MongoDB()
-            db_name.mongo_backup() 
-        except AssertionError, msg:
-            logging.error(msg)
+    try:
+        db_name = MongoDB()
+        db_name.mongo_backup() 
+    except AssertionError, msg:
+        logging.error(msg)
 
 # Swiching to single
 switch_to_replica()
