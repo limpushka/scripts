@@ -186,30 +186,25 @@ class MongoDB:
                 logging.info("Cleanup Done. Total files:%d in Backup Directory %s" % (len(a), self.db_name))
                 
 
-def disk_clean_up(db_names):  # Delete old archive backup files when free disk space is less than 15%
-    for db_name in db_names:
-        logging.info("Starting disk_clean_up function for %s" % db_name)
-        cleanup_path = os.path.join(cleanup_dir, db_name)
-        
-        
-        if os.path.exists(cleanup_path):
-                                    
-            for files in os.listdir(cleanup_path):
-                a = []
-                a.append(files)
-                
-                while len(a) > 2 :
-                    a.sort()
-                    filetodel = a[0]
-                    del a[0]
-                    os.remove(os.path.join(cleanup_path, filetodel))
-                    logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
-                else :
-                    logging.error("Disk cleanup failed. Nothing to delete.")
-                    sys.exit("Disk cleanup failed. Nothing to delete.")
+def disk_clean_up(db_name):  # Delete old archive backup files when free disk space is less than 15%
+    logging.info("Starting disk_clean_up function for %s" % db_name)
+    cleanup_path = os.path.join(cleanup_dir, db_name)  
+    if os.path.exists(cleanup_path):
+        for files in os.listdir(cleanup_path):
+            a = []
+            a.append(files)
+            if len(a) > 2 :
+                a.sort()
+                filetodel = a[0]
+                del a[0]
+                os.remove(os.path.join(cleanup_path, filetodel))
+                logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
+            else :
+                logging.error("Disk cleanup failed. Nothing to delete.")
+                sys.exit("Disk cleanup failed. Nothing to delete.")
                     
-        else:
-            continue
+    else:
+        continue
 
 
 """Script run start's here"""
@@ -237,7 +232,8 @@ db_names = db_conn.database_names()
 disk_space = psutil.disk_usage(storage_dir)
 while disk_space.percent >= 85:
     try:
-        disk_clean_up(db_names)
+        for db_name in db_names:
+            disk_clean_up(db_name)
     except AssertionError, msg:
         logging.error(msg)
         
