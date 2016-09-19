@@ -189,15 +189,16 @@ class MongoDB:
 def disk_clean_up(db_name):  # Delete old archive backup files when free disk space is less than 15%
     logging.info("Starting disk_clean_up function for %s" % db_name)
     cleanup_path = os.path.join(cleanup_dir, db_name)
+    a = []
     for files in os.listdir(cleanup_path):
-        a = []
         a.append(files)
-        if len(a) > 2 :
-            a.sort()
-            filetodel = a[0]
-            del a[0]
-            os.remove(os.path.join(cleanup_path, filetodel))
-            logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
+        
+    while len(a) > 2 :
+        a.sort()
+        filetodel = a[0]
+        del a[0]
+        os.remove(os.path.join(cleanup_path, filetodel))
+        logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
     
                     
 def check_backup_count(db_names):
