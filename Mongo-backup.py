@@ -14,7 +14,7 @@ import subprocess
 import zipfile
 import psutil
 import zc.lockfile
-from shutil import copyfile, rmtree
+from shutil import copyfile, rmtree, copytree
 from pymongo import MongoClient
 
 work_dir = "/datadrive/opt/mongodbbackup/work/"
@@ -50,7 +50,7 @@ def move_backup():
         rmtree(os.path.join(fresh_backup_dir,dirtodel))        
         logging.info("%s Deleted from fresh backup directory" % dirtodel)
     fresh_dir = os.path.join(fresh_backup_dir, MongoDB.backup_time)   
-    shutil.copytree(work_dir,fresh_dir)
+    copytree(work_dir,fresh_dir)
     
 # Key options for script launch
 parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
@@ -263,7 +263,7 @@ while get_disk_space() >= 85:
 
         
 for db_name in db_names:
-    if db_name !="et_api":
+    if db_name !="et_api" and db_name != "local":
         try:
             db_name = MongoDB()
             db_name.mongo_backup() 
