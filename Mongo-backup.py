@@ -61,7 +61,7 @@ parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,
 parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
 parser.add_argument('--weekly', '-w', action="store_true", help='Option for Weekly Backup')
 parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily Backup')
-parser.set_defaults(func=info)
+#parser.set_defaults(func=info)
                                      
 args = parser.parse_args()
 
@@ -81,7 +81,9 @@ elif args.daily:
     check_dir(storage_dir)   
     max_backups = 1000
     logging.info("Starting daily MongoDB backup")    
-
+else:
+    logging.error("Please specify key arguments.--monthly - Option for Monthly Backup,--weekly - Option for Weekly Backup , -daily - Option for Daily Backup")
+    sys.exit()    
 
 # Unlock and delete lock file.
 def un_lock():
