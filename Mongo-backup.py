@@ -31,6 +31,26 @@ def check_dir(path):
     if not os.path.exists(path):  
         os.makedirs(path) 
 
+# Check disk space usage
+def get_disk_space():
+    disk_space = psutil.disk_usage(storage_dir)
+    return disk_space.percent
+
+# Remove unpacked backup for extra fast mongorestoring
+def move_backup():
+    check_dir(fresh_backup_dir)
+    d = []
+    for dirname in os.listdir(fresh_backup_dir):
+        d.append(dirname)
+    if len(a) == 2:
+        d.sort()
+        dirtodel = d[0]
+        del a[0]
+        rmtree(os.path.join(fresh_backup_dir,dirtodel))        
+        logging.info("%s Deleted from fresh backup directory" % dirtodel)
+    fresh_dir = os.path.join(fresh_backup_dir, MongoDB.backup_time)   
+    shutil.copytree(work_dir,fresh_dir)
+    
 # Key options for script launch
 parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,Weekly,Daily')
 parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
@@ -128,6 +148,7 @@ def switch_to_replica():
 
 class MongoDB:
     mongodb_list = []
+    backup_time = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
 
     def __init__(self):
         self.db_name = db_name
@@ -226,13 +247,8 @@ switch_to_single()
 # Connect to Mongodb. Get list of all database names
 db_conn = MongoClient('localhost', 27017)
 db_names = db_conn.database_names()
-
+ 
 # Checks free disk space and cleans storage directory  if disk usage is higher than 85%
-def get_disk_space():
-    disk_space = psutil.disk_usage(storage_dir)
-    return disk_space.percent
-    
-
 while get_disk_space() >= 85:
     try:
         for db_name in db_names:
@@ -264,6 +280,9 @@ for db_name in MongoDB.mongodb_list:
             
 # Unlocking and deleting temp file
 un_lock()
+
+#Copy unpacked dump files to do extrafast mongorestoring 
+move_backup()
 
 # Final Message
 logging.info("All task's for current backup schedule done.")
