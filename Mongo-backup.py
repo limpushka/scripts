@@ -19,7 +19,7 @@ from pymongo import MongoClient
 
 work_dir = "/datadrive/opt/mongodbbackup/work/"
 cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
-fresh_backup_dir = "/datadrive/opt/mongodbackup/fresh/"
+fresh_backup_dir = "/datadrive/opt/mongodbbackup/fresh/"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
 logfile = '/var/log/mongo-backup.log'
@@ -263,12 +263,11 @@ while get_disk_space() >= 85:
 
         
 for db_name in db_names:
-    if db_name !="et_api" and db_name != "local":
-        try:
-            db_name = MongoDB()
-            db_name.mongo_backup() 
-        except AssertionError, msg:
-            logging.error(msg)
+    try:
+        db_name = MongoDB()
+        db_name.mongo_backup() 
+    except AssertionError, msg:
+        logging.error(msg)
 
 # Swiching to single
 switch_to_replica()
