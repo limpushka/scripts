@@ -42,10 +42,10 @@ def move_backup():
     d = []
     for dirname in os.listdir(fresh_backup_dir):
         d.append(dirname)
-    if len(a) == 2:
+    if len(d) == 2:
         d.sort()
         dirtodel = d[0]
-        del a[0]
+        del d[0]
         rmtree(os.path.join(fresh_backup_dir,dirtodel))        
         logging.info("%s Deleted from fresh backup directory" % dirtodel)
     fresh_dir = os.path.join(fresh_backup_dir, MongoDB.backup_time)   
