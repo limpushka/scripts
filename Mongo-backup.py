@@ -238,7 +238,7 @@ else:
     lock = zc.lockfile.LockFile(lockfile, content_template='{pid}; {hostname}')
 
 # Start cleaning working directory
-logging.info("CLeaning working directory")
+logging.info("Cleaning working directory")
 if os.path.exists(work_dir):
     rmtree(work_dir) # Remove all files in work_dir                                        
                                     
@@ -263,11 +263,12 @@ while get_disk_space() >= 85:
 
         
 for db_name in db_names:
-    try:
-        db_name = MongoDB()
-        db_name.mongo_backup() 
-    except AssertionError, msg:
-        logging.error(msg)
+    if db_name !="et_api":
+        try:
+            db_name = MongoDB()
+            db_name.mongo_backup() 
+        except AssertionError, msg:
+            logging.error(msg)
 
 # Swiching to single
 switch_to_replica()
