@@ -57,6 +57,7 @@ parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,
 parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
 parser.add_argument('--weekly', '-w', action="store_true", help='Option for Weekly Backup')
 parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily Backup')
+parser.add_argument('--noarg', action="store_true", default=False)
                                      
 args = parser.parse_args()
 
