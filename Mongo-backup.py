@@ -57,7 +57,7 @@ parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,
 parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
 parser.add_argument('--weekly', '-w', action="store_true", help='Option for Weekly Backup')
 parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily Backup')
-parser.add_argument('--noarg', action="store_true", default=False)
+parser.add_argument('--quiet', '-h',action="store_true", default=True)
                                      
 args = parser.parse_args()
 
@@ -77,7 +77,9 @@ elif args.daily:
     check_dir(storage_dir)   
     max_backups = 1000
     logging.info("Starting daily MongoDB backup")    
-    
+else:
+    logging.error("No arguments are specified") 
+
 # Unlock and delete lock file.
 def un_lock():
     lock.close()
