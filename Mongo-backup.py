@@ -22,7 +22,7 @@ cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
 fresh_backup_dir = "/datadrive/opt/mongodbbackup/fresh/"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
-logfile = '/var/log/mongo-backup.log'
+logfile = '/var/log/mongodb/mongo-backup.log'
 
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename = logfile , level=logging.INFO)
 
