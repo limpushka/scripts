@@ -31,6 +31,10 @@ def check_dir(path):
     if not os.path.exists(path):  
         os.makedirs(path) 
 
+def info():
+    logging.error("Please specify key arguments.--monthly - Option for Monthly Backup,--weekly - Option for Weekly Backup , -daily - Option for Daily Backup")
+    sys.exit()
+
 # Check disk space usage
 def get_disk_space():
     disk_space = psutil.disk_usage(storage_dir)
@@ -57,7 +61,7 @@ parser = argparse.ArgumentParser(description='Backup schedule options - Monthly,
 parser.add_argument('--monthly', '-m', action="store_true", help='Option for Monthly Backup')
 parser.add_argument('--weekly', '-w', action="store_true", help='Option for Weekly Backup')
 parser.add_argument('--daily', '-d', action="store_true", help='Option for Daily Backup')
-parser.set_defaults( action='-h', help="don't print status messages to stdout")
+parser.set_defaults(func=info)
                                      
 args = parser.parse_args()
 
