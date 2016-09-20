@@ -77,8 +77,7 @@ elif args.daily:
     check_dir(storage_dir)   
     max_backups = 1000
     logging.info("Starting daily MongoDB backup")    
-elif args.default:
-    logging.error("No arguments are specified") 
+
 
 # Unlock and delete lock file.
 def un_lock():
