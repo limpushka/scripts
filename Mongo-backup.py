@@ -38,6 +38,7 @@ def get_disk_space():
 
 # Remove unpacked backup for extra fast mongorestoring
 def move_backup():
+    logging.info("Start moving fresh backup")
     check_dir(fresh_backup_dir)
     d = []
     for dirname in os.listdir(fresh_backup_dir):
