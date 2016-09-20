@@ -77,7 +77,7 @@ elif args.daily:
     max_backups = 1000
     logging.info("Starting daily MongoDB backup")    
 else:
-    logging.error("Please specify key arguments.--monthly - Option for Monthly Backup,--weekly - Option for Weekly Backup , -daily - Option for Daily Backup")
+    logging.info("Please specify key arguments.--monthly - Option for Monthly Backup,--weekly - Option for Weekly Backup , -daily - Option for Daily Backup")
     sys.exit("Please specify key arguments.--monthly - Option for Monthly Backup,--weekly - Option for Weekly Backup , -daily - Option for Daily Backup")    
 
 # Unlock and delete lock file.
