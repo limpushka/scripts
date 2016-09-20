@@ -19,7 +19,7 @@ from pymongo import MongoClient
 
 work_dir = "/datadrive/opt/mongodbbackup/work/"
 cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
-fresh_backup_dir = "/datadrive/opt/mongobackup/fresh/"
+fresh_backup_dir = "/datadrive/opt/mongodbackup/fresh/"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
 logfile = '/var/log/mongo-backup.log'
