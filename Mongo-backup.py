@@ -22,9 +22,9 @@ cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
 fresh_backup_dir = "/datadrive/opt/mongodbbackup/fresh/"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
-logfile = '/var/log/mongodb/mongo-backup.log'
+logfile = "/var/log/mongodb/mongo-backup.log"
 
-logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S', filename = logfile , level=logging.INFO)
+logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S-%Z', filename = logfile , level=logging.INFO)
 
 # Check if  directory exists? otherwise creates it
 def check_dir(path):
@@ -78,6 +78,7 @@ elif args.daily:
     logging.info("Starting daily MongoDB backup")    
 else:
     logging.info("Please specify key arguments.--monthly - Option for Monthly Backup,--weekly - Option for Weekly Backup , -daily - Option for Daily Backup")
+    un_lock()
     sys.exit("Please specify key arguments.--monthly - Option for Monthly Backup,--weekly - Option for Weekly Backup , -daily - Option for Daily Backup")    
 
 # Unlock and delete lock file.
@@ -98,7 +99,9 @@ def switch_to_single():
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
                 logging.error("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                un_lock()
                 sys.exit("Failed To Stop Mongod service.Check log. ReturnCode is %s" % e.returncode)
+            
     
     
     os.remove(mongodb_conf)
@@ -114,8 +117,8 @@ def switch_to_single():
         ])
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
-                logging.error("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
-                sys.exit("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                logging.error("Failed To Start Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                sys.exit("Failed To Start Mongod service. Check log. ReturnCode is %s" % e.returncode)
     logging.info("Switching Mongod to single instance ended successfully.")    
     
 # Switch Mongodb single to replica set
@@ -147,21 +150,21 @@ def switch_to_replica():
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
                 logging.error("Failed to Start Mongod service. Check log. ReturnCode is %s" % e.returncode)
-                sys.exit("Failed to Stop Mongod service. Check log %s and ReturnCode" % (e.output))
+                sys.exit("Failed to Start Mongod service. Check log %s and ReturnCode" % (e.output))
     logging.info("Switching Mongod to replica ended successfully.")
 
 class MongoDB:
     mongodb_list = []
-    backup_time = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+    backup_time = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S-%Z')
 
     def __init__(self):
         self.db_name = db_name
-        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S-%Z')
         self.mongodb_list.append(self)
              
     def mongo_backup(self):
-        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
-        logging.info("Running mongodump for DB: %s , dumptime: %s" % (self.db_name, self.dumptime))
+        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S-%Z')
+        logging.info("Running mongodump for DB: %s, dumptime: %s" % (self.db_name, self.dumptime))
         try:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
                     [
@@ -228,6 +231,7 @@ def disk_clean_up(db_name):  # Delete old archive backup files when free disk sp
         logging.info("Not enough free disk space. Cleanup process started.File to Del %s" % filetodel)
     else :
         logging.error("Disk cleanup failed. Nothing to delete.")
+        un_lock()
         sys.exit("Disk cleanup failed. Nothing to delete.")
                     
 
@@ -235,7 +239,7 @@ def disk_clean_up(db_name):  # Delete old archive backup files when free disk sp
 
 # Check, if file is locked and exits, if true
 if os.path.exists(lockfile):
-    logging.error("Another instance of this script is Running")
+    logging.info("Another instance of this script is Running")
     sys.exit("Another instance of this script is Running")
 else:
     lock = zc.lockfile.LockFile(lockfile, content_template='{pid}; {hostname}')
@@ -263,6 +267,7 @@ while get_disk_space() >= 85:
                 disk_clean_up(db_name)
     except AssertionError, msg:
         logging.error(msg)
+        un_lock()
 
         
 for db_name in db_names:
@@ -271,6 +276,7 @@ for db_name in db_names:
         db_name.mongo_backup() 
     except AssertionError, msg:
         logging.error(msg)
+        un_lock()
 
 # Swiching to single
 switch_to_replica()
@@ -281,7 +287,8 @@ for db_name in MongoDB.mongodb_list:
         db_name.mongo_clean_up()
     except AssertionError, msg:
         logging.error(msg)
-            
+        un_lock()
+        
 # Unlocking and deleting temp file
 un_lock()
 
