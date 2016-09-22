@@ -188,15 +188,19 @@ class MongoDB:
         zip_name = os.path.join(archive_path, "%s.zip" % archive_name)
         logging.info("Start zipping dump for DB: %s. Archive zip file name %s " % (self.db_name, archive_name))
         
-        with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as zf:  # Zipping the result
-            abs_src = os.path.abspath(source_name)
-            for dirname, subdirs, files in os.walk(abs_src):
-                for filename in files:
-                    absname = os.path.abspath(os.path.join(dirname, filename))
-                    arcname = absname[len(abs_src) + 1:]
-                    zf.write(absname, arcname)
-            logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
-            logging.info("Zipping for %s Done Successfully" %archive_name)
+        #with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as zf:  # Zipping the result
+            #abs_src = os.path.abspath(source_name)
+            #for dirname, subdirs, files in os.walk(abs_src):
+                #for filename in files:
+                    #absname = os.path.abspath(os.path.join(dirname, filename))
+                    #arcname = absname[len(abs_src) + 1:]
+                    #zf.write(absname, arcname)
+        cmd = 'zip -1 -q -r %s %s' %(zip_name, self.db_name)
+        cd = 'cd %s' %work_dir
+        subprocess.check_call(cd)
+        subprocess.check_call(cmd)
+        logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
+        logging.info("Zipping for %s Done Successfully" %archive_name)
 
     def mongo_clean_up(self):
             archive_path = os.path.join(storage_dir, self.db_name)
