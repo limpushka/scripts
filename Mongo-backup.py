@@ -195,8 +195,8 @@ class MongoDB:
                     #absname = os.path.abspath(os.path.join(dirname, filename))
                     #arcname = absname[len(abs_src) + 1:]
                     #zf.write(absname, arcname)
-        cmd = 'zip -1 -q -r %s %s' %(zip_name, self.db_name)
-        cd = 'cd %s' %work_dir
+        cmd = "zip -1 -q -r %s %s" %(zip_name, self.db_name)
+        cd = "cd %s" % work_dir
         subprocess.check_call(cd)
         subprocess.check_call(cmd)
         logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
