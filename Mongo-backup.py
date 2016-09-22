@@ -199,7 +199,7 @@ class MongoDB:
         change_dir = subprocess.check_call(  # Change directory
                     [
                         'cd',
-                        ' ', '%s' % work_dir
+                         '%s' % work_dir
                         
                     ])
         
@@ -209,8 +209,8 @@ class MongoDB:
                         '-1',
                         '-q',
                         '-r',
-                        '', '%s' % zip_name,
-                        '', '%s'% self.db_name
+                        '%s'  % zip_name,
+                        '%s' % self.db_name
                         
                     ])
         logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
