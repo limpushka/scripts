@@ -198,8 +198,7 @@ class MongoDB:
         cmd = "zip -1 -q -r %s %s" %(zip_name, self.db_name)
         change_dir = subprocess.check_call(  # Change directory
                     [
-                        'cd',
-                         '%s' % work_dir
+                        'cd %s' % work_dir
                         
                     ])
         
