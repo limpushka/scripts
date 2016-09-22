@@ -99,7 +99,6 @@ def switch_to_single():
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
                 logging.error("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
-                un_lock()
                 sys.exit("Failed To Stop Mongod service.Check log. ReturnCode is %s" % e.returncode)
             
     
@@ -155,15 +154,15 @@ def switch_to_replica():
 
 class MongoDB:
     mongodb_list = []
-    backup_time = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S-%Z')
+    backup_time = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
 
     def __init__(self):
         self.db_name = db_name
-        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S-%Z')
+        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
         self.mongodb_list.append(self)
              
     def mongo_backup(self):
-        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S-%Z')
+        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
         logging.info("Running mongodump for DB: %s, dumptime: %s" % (self.db_name, self.dumptime))
         try:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
@@ -210,8 +209,8 @@ class MongoDB:
                     ])
         except subprocess.CalledProcessError as e:
                             logging.error("Failed to run zip. Output Error %s" % e.output)
-                            un_lock()
-                            sys.exit("Failed to run zip. Output Error %s" % e.output)        
+                            sys.exit("Failed to run zip. Output Error %s" % e.output)
+                            
         logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
         logging.info("Zipping for %s Done Successfully" %archive_name)
 
@@ -284,7 +283,7 @@ while get_disk_space() >= 85:
                 disk_clean_up(db_name)
     except AssertionError, msg:
         logging.error(msg)
-        un_lock()
+        
 
         
 for db_name in db_names:
@@ -293,7 +292,7 @@ for db_name in db_names:
         db_name.mongo_backup() 
     except AssertionError, msg:
         logging.error(msg)
-        un_lock()
+        
 
 # Swiching to single
 switch_to_replica()
@@ -304,7 +303,7 @@ for db_name in MongoDB.mongodb_list:
         db_name.mongo_clean_up()
     except AssertionError, msg:
         logging.error(msg)
-        un_lock()
+        
         
 # Unlocking and deleting temp file
 un_lock()
