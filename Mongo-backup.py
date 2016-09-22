@@ -197,8 +197,8 @@ class MongoDB:
                     #zf.write(absname, arcname)
         
         os.chdir(work_dir)
-        
-        zip_from_shell = subprocess.check_call(  # Run zip for Db dump
+        try:
+            zip_from_shell = subprocess.check_call(  # Run zip for Db dump
                     [
                         'zip',
                         '-1',
@@ -208,6 +208,10 @@ class MongoDB:
                         '%s' % self.db_name
                         
                     ])
+        except subprocess.CalledProcessError as e:
+                            logging.error("Failed to run zip. Output Error %s" % e.output)
+                            un_lock()
+                            sys.exit("Failed to run zip. Output Error %s" % e.output)        
         logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
         logging.info("Zipping for %s Done Successfully" %archive_name)
 
