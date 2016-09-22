@@ -195,7 +195,7 @@ class MongoDB:
                     #absname = os.path.abspath(os.path.join(dirname, filename))
                     #arcname = absname[len(abs_src) + 1:]
                     #zf.write(absname, arcname)
-        #cmd = "zip -1 -q -r %s %s" %(zip_name, self.db_name)
+        
         os.chdir(work_dir)
         
         zip_from_shell = subprocess.check_call(  # Run zip for Db dump
@@ -273,25 +273,23 @@ db_names = db_conn.database_names()
 while get_disk_space() >= 85:
     try:
         for db_name in db_names:
-            if db_name != 'et_api':
-                cleanup_path = os.path.join(cleanup_dir, db_name)
-                if not os.path.exists(cleanup_path):
-                    continue
-                else:
-                    disk_clean_up(db_name)
+            cleanup_path = os.path.join(cleanup_dir, db_name)
+            if not os.path.exists(cleanup_path):
+                continue
+            else:
+                disk_clean_up(db_name)
     except AssertionError, msg:
         logging.error(msg)
         un_lock()
 
         
 for db_name in db_names:
-    if db_name != 'et_api':
-        try:
-            db_name = MongoDB()
-            db_name.mongo_backup() 
-        except AssertionError, msg:
-            logging.error(msg)
-            un_lock()
+    try:
+        db_name = MongoDB()
+        db_name.mongo_backup() 
+    except AssertionError, msg:
+        logging.error(msg)
+        un_lock()
 
 # Swiching to single
 switch_to_replica()
