@@ -264,23 +264,25 @@ db_names = db_conn.database_names()
 while get_disk_space() >= 85:
     try:
         for db_name in db_names:
-            cleanup_path = os.path.join(cleanup_dir, db_name)
-            if not os.path.exists(cleanup_path):
-                continue
-            else:
-                disk_clean_up(db_name)
+            if db_name != 'et_api':
+                cleanup_path = os.path.join(cleanup_dir, db_name)
+                if not os.path.exists(cleanup_path):
+                    continue
+                else:
+                    disk_clean_up(db_name)
     except AssertionError, msg:
         logging.error(msg)
         un_lock()
 
         
 for db_name in db_names:
-    try:
-        db_name = MongoDB()
-        db_name.mongo_backup() 
-    except AssertionError, msg:
-        logging.error(msg)
-        un_lock()
+    if db_name != 'et_api':
+        try:
+            db_name = MongoDB()
+            db_name.mongo_backup() 
+        except AssertionError, msg:
+            logging.error(msg)
+            un_lock()
 
 # Swiching to single
 switch_to_replica()
