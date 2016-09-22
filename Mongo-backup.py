@@ -196,9 +196,23 @@ class MongoDB:
                     #arcname = absname[len(abs_src) + 1:]
                     #zf.write(absname, arcname)
         cmd = "zip -1 -q -r %s %s" %(zip_name, self.db_name)
-        cd = "cd %s" % work_dir
-        subprocess.check_call(cd)
-        subprocess.check_call(cmd)
+        change_dir = subprocess.check_call(  # Change directory
+                    [
+                        'cd',
+                        ' ', '%s' % work_dir
+                        
+                    ])
+        
+        zip_from_shell = subprocess.check_call(  # Run zip for Db dump
+                    [
+                        'zip',
+                        '-1',
+                        '-q',
+                        '-r',
+                        '', '%s' % zip_name,
+                        '', '%s'% self.db_name
+                        
+                    ])
         logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
         logging.info("Zipping for %s Done Successfully" %archive_name)
 
