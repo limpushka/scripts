@@ -199,6 +199,7 @@ class MongoDB:
         try:
             tar = subprocess.Popen(split(tar_cmd), stdout=subprocess.PIPE)
             lz4 = subprocess.Popen(split(lz4_cmd), stdin=tar.stdout, stdout=subprocess.PIPE)
+            tar.stdout.close
             output = lz4.communicate()[0]              
             
             #zip_from_shell = subprocess.check_call(  # Run tar+lz4 for Db dump
