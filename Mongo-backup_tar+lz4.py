@@ -199,7 +199,7 @@ class MongoDB:
                         '%s' % self.db_name,
                         '|',
                         'lz4',
-                        '-',
+                        '>',
                         '%s'  % tar_name
                     
                         
