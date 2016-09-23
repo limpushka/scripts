@@ -23,7 +23,7 @@ fresh_backup_dir = "/datadrive/opt/mongodbbackup/fresh/"
 mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
 logfile = "/var/log/mongodb/mongo-backup.log"
-backup_time = null
+backup_time = datetime.datetime.today().strftime('%Y-%m-%d_%H-%M-%S')
 
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S-%Z', filename = logfile , level=logging.INFO)
 
