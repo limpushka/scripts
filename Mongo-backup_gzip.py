@@ -240,6 +240,7 @@ def disk_clean_up(db_name):  # Delete old archive backup files when free disk sp
         logging.error("Disk cleanup failed. Nothing to delete.")
         un_lock()
         sys.exit("Disk cleanup failed. Nothing to delete.")
+        
                     
 
 """Script run start's here"""
