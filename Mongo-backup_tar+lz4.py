@@ -190,8 +190,8 @@ class MongoDB:
         
         #tar cvf - folderABC | lz4 > folderABC.tar.lz4
         os.chdir(work_dir)
-        tar_cmd = ['tar', 'cvf', '-', '%s'] % self.db_name
-        lz4_cmd = ['lz4', '>', '%s'] % tar_name
+        tar_cmd = ['tar', 'cvf', '-', '%s' % self.db_name] 
+        lz4_cmd = ['lz4', '>', '%s' % tar_name] 
         tar = subprocess.Popen(tar_cmd.split(), stdout=subprocess.PIPE)
         lz4 = subprocess.Popen(lz4_cmd.split(), stdin=tar.stdout, stdout=subprocess.PIPE)
         output = lz4.communicate()[0]        
