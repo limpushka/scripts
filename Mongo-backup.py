@@ -24,6 +24,7 @@ mongodb_conf = "/etc/mongod.conf"
 lockfile = "/tmp/mongo-backup.lock"
 logfile = "/var/log/mongodb/mongo-backup.log"
 
+
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s]  %(message)s', datefmt='%m/%d/%Y %H:%M:%S-%Z', filename = logfile , level=logging.INFO)
 
 # Check if  directory exists? otherwise creates it
@@ -49,7 +50,7 @@ def move_backup():
         del d[0]
         rmtree(os.path.join(fresh_backup_dir,dirtodel))        
         logging.info("%s Deleted from fresh backup directory" % dirtodel)
-    fresh_dir = os.path.join(fresh_backup_dir, MongoDB.backup_time)   
+    fresh_dir = os.path.join(fresh_backup_dir, backup_time)   
     move(work_dir,fresh_dir)
     
 # Key options for script launch
@@ -78,7 +79,6 @@ elif args.daily:
     logging.info("Starting daily MongoDB backup")    
 else:
     logging.info("Please specify key arguments.--monthly - Option for Monthly Backup,--weekly - Option for Weekly Backup , -daily - Option for Daily Backup")
-    un_lock()
     sys.exit("Please specify key arguments.--monthly - Option for Monthly Backup,--weekly - Option for Weekly Backup , -daily - Option for Daily Backup")    
 
 # Unlock and delete lock file.
@@ -89,6 +89,7 @@ def un_lock():
 # Switch Mongod replica to single and reverse
 def switch_to_single():
     logging.info("Start switching Mongod to single instance. Stopping service")
+    backup_time = datetime.datetime.today().strftime('%Y-%m-%d_%H-%M-%S')
     try:
         stop_check = subprocess.check_call(
         [
@@ -154,16 +155,14 @@ def switch_to_replica():
 
 class MongoDB:
     mongodb_list = []
-    backup_time = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+    
 
     def __init__(self):
         self.db_name = db_name
-        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
         self.mongodb_list.append(self)
              
     def mongo_backup(self):
-        self.dumptime = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
-        logging.info("Running mongodump for DB: %s, dumptime: %s" % (self.db_name, self.dumptime))
+        logging.info("Running mongodump for DB: %s, dumptime: %s" % (self.db_name, backup_time))
         try:
             backup_output = subprocess.check_call(  # Run Mongodump for each Database
                     [
@@ -178,7 +177,7 @@ class MongoDB:
         
     def mongo_zip_result(self):
         
-        archive_name = self.db_name + '.' + self.dumptime
+        archive_name = self.db_name + '_' + backup_time
         source_name = work_dir + self.db_name
         archive_path = os.path.join(storage_dir, self.db_name)
 
@@ -186,15 +185,7 @@ class MongoDB:
 
         zip_name = os.path.join(archive_path, "%s.zip" % archive_name)
         logging.info("Start zipping dump for DB: %s. Archive zip file name %s " % (self.db_name, archive_name))
-        
-        #with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as zf:  # Zipping the result
-            #abs_src = os.path.abspath(source_name)
-            #for dirname, subdirs, files in os.walk(abs_src):
-                #for filename in files:
-                    #absname = os.path.abspath(os.path.join(dirname, filename))
-                    #arcname = absname[len(abs_src) + 1:]
-                    #zf.write(absname, arcname)
-        
+      
         os.chdir(work_dir)
         try:
             zip_from_shell = subprocess.check_call(  # Run zip for Db dump
@@ -239,7 +230,7 @@ def disk_clean_up(db_name):  # Delete old archive backup files when free disk sp
     for files in os.listdir(cleanup_path):
         a.append(files)
         
-    if len(a) > 2 :
+    if len(a) > 6 :
         a.sort()
         filetodel = a[0]
         del a[0]
