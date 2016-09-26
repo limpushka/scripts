@@ -17,6 +17,7 @@ import zc.lockfile
 from shutil import copyfile, rmtree, copytree, move
 from pymongo import MongoClient
 
+exclude_db = set('local','et_api')
 work_dir = "/datadrive/opt/mongodbbackup/work/"
 cleanup_dir = "/datadrive/opt/mongodbbackup/storage/daily"
 fresh_backup_dir = "/datadrive/opt/mongodbbackup/fresh/"
@@ -276,13 +277,14 @@ while get_disk_space() >= 85:
         logging.error(msg)
         
 
-        
+#[db_name for db_name in db_names if db_name not in exclude_db]:
 for db_name in db_names:
-    try:
-        db_name = MongoDB()
-        db_name.mongo_backup() 
-    except AssertionError, msg:
-        logging.error(msg)
+    if db_name not in exclude_db:
+        try:
+            db_name = MongoDB()
+            db_name.mongo_backup() 
+        except AssertionError, msg:
+            logging.error(msg)
         
 
 # Swiching to single
