@@ -102,6 +102,7 @@ def switch_to_single():
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
                 logging.error("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                un_lock()
                 sys.exit("Failed To Stop Mongod service.Check log. ReturnCode is %s" % e.returncode)
             
     
@@ -120,6 +121,7 @@ def switch_to_single():
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
                 logging.error("Failed To Start Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                un_lock()
                 sys.exit("Failed To Start Mongod service. Check log. ReturnCode is %s" % e.returncode)
     logging.info("Switching Mongod to single instance ended successfully.")    
     
@@ -136,6 +138,7 @@ def switch_to_replica():
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
                 logging.error("Failed To Stop Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                un_lock()
                 sys.exit("Failed To Stop Mongod service.Check log %s and ReturnCode" % (e.output))
     
     os.remove(mongodb_conf)
@@ -152,6 +155,7 @@ def switch_to_replica():
     except subprocess.CalledProcessError as e:
             if e.returncode !=0:
                 logging.error("Failed to Start Mongod service. Check log. ReturnCode is %s" % e.returncode)
+                un_lock()
                 sys.exit("Failed to Start Mongod service. Check log %s and ReturnCode" % (e.output))
     logging.info("Switching Mongod to replica ended successfully.")
 
@@ -174,6 +178,7 @@ class MongoDB:
                     ])
         except subprocess.CalledProcessError as e:
                     logging.error("Failed to run mongodump. Output Error %s" % e.output)
+                    un_lock()
                     sys.exit("Failed to run mongodump. Output Error %s" % e.output)        
         logging.info("Mongodump for DB: %s ended Successfully" % self.db_name)        
         
@@ -202,6 +207,7 @@ class MongoDB:
                     ])
         except subprocess.CalledProcessError as e:
                             logging.error("Failed to run zip. Output Error %s" % e.output)
+                            un_lock()
                             sys.exit("Failed to run zip. Output Error %s" % e.output)
                             
         logging.info("End zip dump for DB: %s and saving zip file %s to %s " % (self.db_name, archive_name, archive_path))
